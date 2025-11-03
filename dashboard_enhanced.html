@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FDOT CCTV Operations Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #003366; font-size: 28px; }
+        .subtitle { color: #666; margin-top: 5px; }
+
+        .toolbar { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 12px 20px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 15px; }
+        .search-input:focus { outline: none; border-color: #003366; }
+
+        .bulk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+        .btn { background: #003366; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn:hover { background: #004488; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 32px; font-weight: bold; color: #003366; }
+        .stat-label { color: #666; margin-top: 5px; font-size: 14px; }
+
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border: 2px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .filter-btn.active { border-color: #003366; background: #003366; color: white; }
+
+        .camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .camera-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .camera-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .camera-card.selected { border: 2px solid #003366; }
+
+        .camera-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .camera-checkbox { width: 18px; height: 18px; cursor: pointer; }
+        .camera-name { font-weight: 600; color: #003366; flex: 1; }
+        .camera-info { font-size: 14px; color: #666; margin: 4px 0; margin-left: 28px; }
+
+        .camera-actions { display: flex; gap: 8px; margin-top: 12px; margin-left: 28px; }
+        .action-btn { padding: 6px 12px; font-size: 13px; border-radius: 4px; border: none; cursor: pointer; }
+        .action-btn.reboot { background: #dc3545; color: white; }
+        .action-btn.reboot:hover { background: #c82333; }
+        .action-btn.snapshot { background: #28a745; color: white; }
+        .action-btn.snapshot:hover { background: #218838; }
+
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .no-results { text-align: center; padding: 40px; color: #999; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .modal-header { font-size: 20px; font-weight: 600; color: #003366; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #003366; }
+        .form-textarea { resize: vertical; min-height: 80px; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        /* Notifications */
+        .notification { position: fixed; top: 20px; right: 20px; background: white; padding: 15px 20px; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2000; display: none; min-width: 300px; }
+        .notification.show { display: block; animation: slideIn 0.3s ease; }
+        .notification.success { border-left: 4px solid #28a745; }
+        .notification.error { border-left: 4px solid #dc3545; }
+        .notification.info { border-left: 4px solid #17a2b8; }
+        @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 FDOT CCTV Operations Tool</h1>
+            <div class="subtitle">District 3 Camera Management System</div>
+        </header>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCameras">-</div>
+                <div class="stat-label">Total Cameras</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="displayedCameras">-</div>
+                <div class="stat-label">Displayed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="selectedCameras">0</div>
+                <div class="stat-label">Selected</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search cameras by name, IP, location, or highway (e.g., 'I10', '10.164', 'MM 5')..." />
+
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterHighway('all')">All</button>
+                <button class="filter-btn" onclick="filterHighway('I10')">I-10</button>
+                <button class="filter-btn" onclick="filterHighway('I110')">I-110</button>
+                <button class="filter-btn" onclick="filterHighway('US90')">US-90</button>
+                <button class="filter-btn" onclick="filterHighway('US98')">US-98</button>
+            </div>
+
+            <div class="bulk-actions">
+                <button class="btn btn-secondary" onclick="selectAll()">Select All</button>
+                <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
+                <button class="btn btn-danger" onclick="bulkReboot()" id="bulkRebootBtn" disabled>Reboot Selected</button>
+                <button class="btn btn-success" onclick="bulkSnapshot()" id="bulkSnapshotBtn" disabled>Snapshot Selected</button>
+            </div>
+        </div>
+
+        <div id="cameraContainer">
+            <div class="loading">Loading cameras...</div>
+        </div>
+    </div>
+
+    <!-- Reboot Modal -->
+    <div id="rebootModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Reboot Camera</div>
+            <div class="form-group">
+                <label class="form-label">Camera:</label>
+                <div id="rebootCameraName" style="font-weight: 600;"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Operator Name: *</label>
+                <input type="text" class="form-input" id="rebootOperator" placeholder="Your name" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Reason for Reboot: *</label>
+                <textarea class="form-textarea" id="rebootReason" placeholder="e.g., Camera not responding, scheduled maintenance"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRebootModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmReboot()">Reboot Camera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snapshot Modal -->
+    <div id="snapshotModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Capture Snapshots</div>
+            <div class="form-group">
+                <label class="form-label">Cameras Selected: <span id="snapshotCameraCount">0</span></label>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Operator Name: *</label>
+                <input type="text" class="form-input" id="snapshotOperator" placeholder="Your name" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Duration (minutes): *</label>
+                <input type="number" class="form-input" id="snapshotDuration" value="60" min="1" max="1440" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Interval (seconds): *</label>
+                <input type="number" class="form-input" id="snapshotInterval" value="300" min="30" max="3600" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
+                <button class="btn btn-success" onclick="confirmSnapshot()">Start Capture</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let allCameras = [];
+        let currentFilter = 'all';
+        let selectedCameras = new Set();
+        let currentRebootCamera = null;
+
+        // Load cameras on page load
+        async function loadCameras() {
+            try {
+                const response = await fetch('/api/cameras/list');
+                const data = await response.json();
+                allCameras = data.cameras;
+                document.getElementById('totalCameras').textContent = data.total;
+                displayCameras(allCameras);
+            } catch (error) {
+                document.getElementById('cameraContainer').innerHTML = '<div class="no-results">Error loading cameras</div>';
+            }
+        }
+
+        // Display cameras
+        function displayCameras(cameras) {
+            const container = document.getElementById('cameraContainer');
+            document.getElementById('displayedCameras').textContent = cameras.length;
+
+            if (cameras.length === 0) {
+                container.innerHTML = '<div class="no-results">No cameras found</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="camera-grid">' + cameras.map(cam => `
+                <div class="camera-card ${selectedCameras.has(cam.id) ? 'selected' : ''}" id="card-${cam.id}">
+                    <div class="camera-header">
+                        <input type="checkbox" class="camera-checkbox"
+                               ${selectedCameras.has(cam.id) ? 'checked' : ''}
+                               onchange="toggleCamera('${cam.id}')" />
+                        <div class="camera-name">${cam.name}</div>
+                    </div>
+                    <div class="camera-info">📍 ${cam.location}</div>
+                    <div class="camera-info">🌐 ${cam.ip}</div>
+                    <div class="camera-actions">
+                        <button class="action-btn reboot" onclick="showRebootModal('${cam.id}')">🔄 Reboot</button>
+                        <button class="action-btn snapshot" onclick="snapshotSingle('${cam.id}')">📸 Snapshot</button>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+
+            updateSelectionCount();
+        }
+
+        // Toggle camera selection
+        function toggleCamera(cameraId) {
+            if (selectedCameras.has(cameraId)) {
+                selectedCameras.delete(cameraId);
+            } else {
+                selectedCameras.add(cameraId);
+            }
+            updateSelectionCount();
+
+            const card = document.getElementById('card-' + cameraId);
+            if (card) {
+                card.classList.toggle('selected', selectedCameras.has(cameraId));
+            }
+        }
+
+        // Update selection count and buttons
+        function updateSelectionCount() {
+            const count = selectedCameras.size;
+            document.getElementById('selectedCameras').textContent = count;
+            document.getElementById('bulkRebootBtn').disabled = count === 0;
+            document.getElementById('bulkSnapshotBtn').disabled = count === 0;
+        }
+
+        // Select/Deselect all
+        function selectAll() {
+            const displayed = document.querySelectorAll('.camera-card');
+            displayed.forEach(card => {
+                const id = card.id.replace('card-', '');
+                selectedCameras.add(id);
+                card.classList.add('selected');
+                const checkbox = card.querySelector('.camera-checkbox');
+                if (checkbox) checkbox.checked = true;
+            });
+            updateSelectionCount();
+        }
+
+        function deselectAll() {
+            selectedCameras.clear();
+            document.querySelectorAll('.camera-card').forEach(card => {
+                card.classList.remove('selected');
+                const checkbox = card.querySelector('.camera-checkbox');
+                if (checkbox) checkbox.checked = false;
+            });
+            updateSelectionCount();
+        }
+
+        // Search cameras
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 2) {
+                filterCameras(currentFilter);
+                return;
+            }
+
+            const filtered = allCameras.filter(cam =>
+                cam.name.toLowerCase().includes(query) ||
+                cam.ip.includes(query) ||
+                cam.location.toLowerCase().includes(query)
+            );
+            displayCameras(filtered);
+        });
+
+        // Filter by highway
+        function filterHighway(highway) {
+            currentFilter = highway;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            filterCameras(highway);
+        }
+
+        function filterCameras(highway) {
+            if (highway === 'all') {
+                displayCameras(allCameras);
+            } else {
+                const filtered = allCameras.filter(cam => cam.location.includes(highway));
+                displayCameras(filtered);
+            }
+        }
+
+        // Show reboot modal
+        function showRebootModal(cameraId) {
+            const camera = allCameras.find(c => c.id === cameraId);
+            if (!camera) return;
+
+            currentRebootCamera = camera;
+            document.getElementById('rebootCameraName').textContent = camera.name;
+            document.getElementById('rebootOperator').value = '';
+            document.getElementById('rebootReason').value = '';
+            document.getElementById('rebootModal').classList.add('show');
+        }
+
+        function closeRebootModal() {
+            document.getElementById('rebootModal').classList.remove('show');
+            currentRebootCamera = null;
+        }
+
+        // Confirm reboot
+        async function confirmReboot() {
+            const operator = document.getElementById('rebootOperator').value.trim();
+            const reason = document.getElementById('rebootReason').value.trim();
+
+            if (!operator || !reason) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (!currentRebootCamera) return;
+
+            try {
+                const response = await fetch('/api/camera/reboot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        camera_ip: currentRebootCamera.ip,
+                        camera_name: currentRebootCamera.name,
+                        operator: operator,
+                        reason: reason
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showNotification(`Camera ${currentRebootCamera.name} rebooted successfully!`, 'success');
+                } else {
+                    showNotification(`Reboot failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+
+            closeRebootModal();
+        }
+
+        // Bulk reboot
+        async function bulkReboot() {
+            if (selectedCameras.size === 0) return;
+
+            const operator = prompt('Enter your name:');
+            if (!operator) return;
+
+            const reason = prompt('Enter reason for reboot:');
+            if (!reason) return;
+
+            let success = 0;
+            let failed = 0;
+
+            for (const cameraId of selectedCameras) {
+                const camera = allCameras.find(c => c.id === cameraId);
+                if (!camera) continue;
+
+                try {
+                    const response = await fetch('/api/camera/reboot', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            camera_ip: camera.ip,
+                            camera_name: camera.name,
+                            operator: operator,
+                            reason: reason
+                        })
+                    });
+
+                    if (response.ok) success++;
+                    else failed++;
+                } catch (error) {
+                    failed++;
+                }
+            }
+
+            showNotification(`Bulk reboot complete: ${success} succeeded, ${failed} failed`, success > 0 ? 'success' : 'error');
+            deselectAll();
+        }
+
+        // Single camera snapshot
+        function snapshotSingle(cameraId) {
+            selectedCameras.clear();
+            selectedCameras.add(cameraId);
+            updateSelectionCount();
+            bulkSnapshot();
+        }
+
+        // Bulk snapshot
+        function bulkSnapshot() {
+            if (selectedCameras.size === 0) return;
+
+            document.getElementById('snapshotCameraCount').textContent = selectedCameras.size;
+            document.getElementById('snapshotOperator').value = '';
+            document.getElementById('snapshotModal').classList.add('show');
+        }
+
+        function closeSnapshotModal() {
+            document.getElementById('snapshotModal').classList.remove('show');
+        }
+
+        // Confirm snapshot
+        async function confirmSnapshot() {
+            const operator = document.getElementById('snapshotOperator').value.trim();
+            const duration = parseInt(document.getElementById('snapshotDuration').value);
+            const interval = parseInt(document.getElementById('snapshotInterval').value);
+
+            if (!operator) {
+                showNotification('Please enter operator name', 'error');
+                return;
+            }
+
+            const cameras = Array.from(selectedCameras).map(id => {
+                const cam = allCameras.find(c => c.id === id);
+                return { ip: cam.ip, name: cam.name };
+            });
+
+            try {
+                const response = await fetch('/api/snapshot/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cameras: cameras,
+                        duration_minutes: duration,
+                        interval_seconds: interval,
+                        operator: operator
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification(`Snapshot capture started for ${cameras.length} camera(s)!`, 'success');
+                } else {
+                    showNotification(`Snapshot failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+
+            closeSnapshotModal();
+            deselectAll();
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Load cameras on startup
+        loadCameras();
+    </script>
+</body>
+</html>

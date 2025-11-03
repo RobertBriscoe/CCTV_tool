@@ -1,0 +1,1714 @@
+{
+    "cameras": {
+        "CCTV_I10_000_6_EB": {
+            "name": "CCTV-I10-000.6-EB",
+            "ip": "10.164.244.149",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_000_7_EB": {
+            "name": "CCTV-I10-000.7-EB",
+            "ip": "10.164.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_001_5_EB": {
+            "name": "CCTV-I10-001.5-EB",
+            "ip": "10.164.244.23",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_003_3_EB": {
+            "name": "CCTV-I10-003.3-EB",
+            "ip": "10.164.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_004_3_EB": {
+            "name": "CCTV-I10-004.3-EB",
+            "ip": "10.164.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_005_5_M": {
+            "name": "CCTV-I10-005.5-M",
+            "ip": "10.164.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_007_0_M": {
+            "name": "CCTV-I10-007.0-M",
+            "ip": "10.164.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_008_1_EB": {
+            "name": "CCTV-I10-008.1-EB",
+            "ip": "10.164.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_009_2_EB": {
+            "name": "CCTV-I10-009.2-EB",
+            "ip": "10.164.244.47",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_010_2_EB": {
+            "name": "CCTV-I10-010.2-EB",
+            "ip": "10.164.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_010_2_WB": {
+            "name": "CCTV-I10-010.2-WB",
+            "ip": "10.164.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_010_8_WB": {
+            "name": "CCTV-I10-010.8-WB",
+            "ip": "10.164.244.56",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_011_4_EB": {
+            "name": "CCTV-I10-011.4-EB",
+            "ip": "10.164.244.65",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_012_4_EB": {
+            "name": "CCTV-I10-012.4-EB",
+            "ip": "10.164.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10012_9_EB": {
+            "name": "CCTV-I10012.9-EB",
+            "ip": "10.164.244.71",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_013_9_EB": {
+            "name": "CCTV-I10-013.9-EB",
+            "ip": "10.164.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_015_2_EB": {
+            "name": "CCTV-I10-015.2-EB",
+            "ip": "10.164.244.77",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_015_9_EB": {
+            "name": "CCTV-I10-015.9-EB",
+            "ip": "10.164.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_016_5_WB": {
+            "name": "CCTV-I10-016.5-WB",
+            "ip": "10.164.244.89",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_017_5_EB": {
+            "name": "CCTV-I10-017.5-EB",
+            "ip": "10.164.244.95",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_018_2_EB": {
+            "name": "CCTV-I10-018.2-EB",
+            "ip": "10.164.244.98",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_019_2_M": {
+            "name": "CCTV-I10-019.2-M",
+            "ip": "10.164.244.104",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_020_0_WB": {
+            "name": "CCTV-I10-020.0-WB",
+            "ip": "10.164.244.107",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_021_7_EB": {
+            "name": "CCTV-I10-021.7-EB",
+            "ip": "10.164.244.113",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_023_7_EB": {
+            "name": "CCTV-I10-023.7-EB",
+            "ip": "10.164.244.119",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_025_9_M": {
+            "name": "CCTV-I10-025.9-M",
+            "ip": "10.164.244.122",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_026_9_WB": {
+            "name": "CCTV-I10-026.9-WB",
+            "ip": "10.164.244.125",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_028_3_EB": {
+            "name": "CCTV-I10-028.3-EB",
+            "ip": "10.164.244.128",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_030_1_EB": {
+            "name": "CCTV-I10-030.1-EB",
+            "ip": "10.164.244.131",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_031_2_M": {
+            "name": "CCTV-I10-031.2-M",
+            "ip": "10.164.244.134",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_032_2_WB": {
+            "name": "CCTV-I10-032.2-WB",
+            "ip": "10.170.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_032_8_EB": {
+            "name": "CCTV-I10-032.8-EB",
+            "ip": "10.164.244.140",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_036_9_WB": {
+            "name": "CCTV-I10-036.9-WB",
+            "ip": "10.170.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_038_9_WB": {
+            "name": "CCTV-I10-038.9-WB",
+            "ip": "10.170.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_040_9_WB": {
+            "name": "CCTV-I10-040.9-WB",
+            "ip": "10.170.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_042_4_EB": {
+            "name": "CCTV-I10-042.4-EB",
+            "ip": "10.170.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_043_4_EB": {
+            "name": "CCTV-I10-043.4-EB",
+            "ip": "10.170.244.40",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_043_4_WB": {
+            "name": "CCTV-I10-043.4-WB",
+            "ip": "10.170.244.37",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_045_0_M": {
+            "name": "CCTV-I10-045.0-M",
+            "ip": "10.172.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_046_5_EB": {
+            "name": "CCTV-I10-046.5-EB",
+            "ip": "10.172.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_046_5_WB": {
+            "name": "CCTV-I10-046.5-WB",
+            "ip": "10.172.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_047_6_EB": {
+            "name": "CCTV-I10-047.6-EB",
+            "ip": "10.172.244.44",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_047_6_WB": {
+            "name": "CCTV-I10-047.6-WB",
+            "ip": "10.172.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_049_1_WB": {
+            "name": "CCTV-I10-049.1-WB",
+            "ip": "10.172.244.47",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_050_8_WB": {
+            "name": "CCTV-I10-050.8-WB",
+            "ip": "10.172.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_051_8_WB": {
+            "name": "CCTV-I10-051.8-WB",
+            "ip": "10.172.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_052_5_EB": {
+            "name": "CCTV-I10-052.5-EB",
+            "ip": "10.172.244.59",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_052_5_WB": {
+            "name": "CCTV-I10-052.5-WB",
+            "ip": "10.172.244.56",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_053_6_EB": {
+            "name": "CCTV-I10-053.6-EB",
+            "ip": "10.172.244.62",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_054_3_EB": {
+            "name": "CCTV-I10-054.3-EB",
+            "ip": "10.172.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_054_3_WB": {
+            "name": "CCTV-I10-054.3-WB",
+            "ip": "10.172.244.65",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_054_9_WB": {
+            "name": "CCTV-I10-054.9-WB",
+            "ip": "10.172.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_055_0_EB": {
+            "name": "CCTV-I10-055.0-EB",
+            "ip": "10.172.244.77",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_056_3_M": {
+            "name": "CCTV-I10-056.3-M",
+            "ip": "10.172.244.83",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_057_5_EB": {
+            "name": "CCTV-I10-057.5-EB",
+            "ip": "10.172.244.95",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_057_8_WB": {
+            "name": "CCTV-I10-057.8-WB",
+            "ip": "10.172.244.92",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_058_7_WB": {
+            "name": "CCTV-I10-058.7-WB",
+            "ip": "10.172.244.98",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_059_7_WB": {
+            "name": "CCTV-I10-059.7-WB",
+            "ip": "10.172.244.104",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_060_6_EB": {
+            "name": "CCTV-I10-060.6-EB",
+            "ip": "10.172.244.107",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_060_7_WB": {
+            "name": "CCTV-I10-060.7-WB",
+            "ip": "10.172.244.110",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_061_5_WB": {
+            "name": "CCTV-I10-061.5-WB",
+            "ip": "10.172.244.113",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_062_0_EB": {
+            "name": "CCTV-I10-062.0-EB",
+            "ip": "10.172.244.116",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_063_2_WB": {
+            "name": "CCTV-I10-063.2-WB",
+            "ip": "10.172.244.119",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_064_1_EB": {
+            "name": "CCTV-I10-064.1-EB",
+            "ip": "10.172.244.125",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_064_1_WB": {
+            "name": "CCTV-I10-064.1-WB",
+            "ip": "10.172.244.122",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_065_3_EB": {
+            "name": "CCTV-I10-065.3-EB",
+            "ip": "10.172.244.131",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_065_3_WB": {
+            "name": "CCTV-I10-065.3-WB",
+            "ip": "10.172.244.128",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_067_1_EB": {
+            "name": "CCTV-I10-067.1-EB",
+            "ip": "10.172.244.137",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_067_1_WB": {
+            "name": "CCTV-I10-067.1-WB",
+            "ip": "10.172.244.134",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_068_4_WB": {
+            "name": "CCTV-I10-068.4-WB",
+            "ip": "10.172.244.142",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_069_4_M": {
+            "name": "CCTV-I10-069.4-M",
+            "ip": "10.171.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_071_0_WB": {
+            "name": "CCTV-I10-071.0-WB",
+            "ip": "10.171.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_072_3_EB": {
+            "name": "CCTV-I10-072.3-EB",
+            "ip": "10.171.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_073_6_M": {
+            "name": "CCTV-I10-073.6-M",
+            "ip": "10.171.244.39",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_073_8_WB": {
+            "name": "CCTV-I10-073.8-WB",
+            "ip": "10.171.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_073_9_EB": {
+            "name": "CCTV-I10-073.9-EB",
+            "ip": "10.171.244.44",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_075_4_EB": {
+            "name": "CCTV-I10-075.4-EB",
+            "ip": "10.171.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_075_4_WB": {
+            "name": "CCTV-I10-075.4-WB",
+            "ip": "10.171.244.47",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_076_7_WB": {
+            "name": "CCTV-I10-076.7-WB",
+            "ip": "10.171.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_078_5_EB": {
+            "name": "CCTV-I10-078.5-EB",
+            "ip": "10.171.244.56",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_080_2_WB": {
+            "name": "CCTV-I10-080.2-WB",
+            "ip": "10.171.244.59",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_081_9_WB": {
+            "name": "CCTV-I10-081.9-WB",
+            "ip": "10.171.244.62",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_084_6_M": {
+            "name": "CCTV-I10-084.6-M",
+            "ip": "10.171.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_083_2_EB": {
+            "name": "CCTV-I10-083.2-EB",
+            "ip": "10.171.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_086_2_EB": {
+            "name": "CCTV-I10-086.2-EB",
+            "ip": "10.171.244.83",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_087_5_WB": {
+            "name": "CCTV-I10-087.5-WB",
+            "ip": "10.171.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_088_9_WB": {
+            "name": "CCTV-I10-088.9-WB",
+            "ip": "10.171.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_090_7_WB": {
+            "name": "CCTV-I10-090.7-WB",
+            "ip": "10.171.244.92",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_090_8_EB": {
+            "name": "CCTV-I10-090.8-EB",
+            "ip": "10.171.244.95",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_091_9_WB": {
+            "name": "CCTV-I10-091.9-WB",
+            "ip": "10.171.244.98",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_092_2_EB": {
+            "name": "CCTV-I10-092.2-EB",
+            "ip": "10.171.244.101",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_093_6_EB": {
+            "name": "CCTV-I10-093.6-EB",
+            "ip": "10.171.244.107",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_093_6_WB": {
+            "name": "CCTV-I10-093.6-WB",
+            "ip": "10.171.244.104",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_094_9_WB": {
+            "name": "CCTV-I10-094.9-WB",
+            "ip": "10.171.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_095_9_M": {
+            "name": "CCTV-I10-095.9-M",
+            "ip": "10.174.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_097_9_EB": {
+            "name": "CCTV-I10-097.9-EB",
+            "ip": "10.174.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_099_5_WB": {
+            "name": "CCTV-I10-099.5-WB",
+            "ip": "10.174.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_101_0_WB": {
+            "name": "CCTV-I10-101.0-WB",
+            "ip": "10.174.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_101_9_WB": {
+            "name": "CCTV-I10-101.9-WB",
+            "ip": "10.174.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_103_7_M": {
+            "name": "CCTV-I10-103.7-M",
+            "ip": "10.175.244.23",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_105_0_EB": {
+            "name": "CCTV-I10-105.0-EB",
+            "ip": "10.175.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_105_0_WB": {
+            "name": "CCTV-I10-105.0-WB",
+            "ip": "10.175.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_106_0_WB": {
+            "name": "CCTV-I10-106.0-WB",
+            "ip": "10.175.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_106_1_EB": {
+            "name": "CCTV-I10-106.1-EB",
+            "ip": "10.175.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_107_3_EB": {
+            "name": "CCTV-I10-107.3-EB",
+            "ip": "10.175.244.44",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_107_3_WB": {
+            "name": "CCTV-I10-107.3-WB",
+            "ip": "10.175.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_108_5_EB": {
+            "name": "CCTV-I10-108.5-EB",
+            "ip": "10.174.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_108_5_WB": {
+            "name": "CCTV-I10-108.5-WB",
+            "ip": "10.175.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_109_7_EB": {
+            "name": "CCTV-I10-109.7-EB",
+            "ip": "10.174.244.56",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_109_8_WB": {
+            "name": "CCTV-I10-109.8-WB",
+            "ip": "10.174.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_111_4_M": {
+            "name": "CCTV-I10-111.4-M",
+            "ip": "10.174.244.65",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_113_2_WB": {
+            "name": "CCTV-I10-113.2-WB",
+            "ip": "10.174.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_114_2_EB": {
+            "name": "CCTV-I10-114.2-EB",
+            "ip": "10.174.244.77",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_115_5_WB": {
+            "name": "CCTV-I10-115.5-WB",
+            "ip": "10.174.244.80",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_116_2_WB": {
+            "name": "CCTV-I10-116.2-WB",
+            "ip": "10.174.244.101",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_117_4_EB": {
+            "name": "CCTV-I10-117.4-EB",
+            "ip": "10.174.244.104",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_118_1_EB": {
+            "name": "CCTV-I10-118.1-EB",
+            "ip": "10.175.244.56",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_119_4_M": {
+            "name": "CCTV-I10-119.4-M",
+            "ip": "10.175.244.62",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_120_2_WB": {
+            "name": "CCTV-I10-120.2-WB",
+            "ip": "10.175.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_121_8_EB": {
+            "name": "CCTV-I10-121.8-EB",
+            "ip": "10.175.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_123_7_EB": {
+            "name": "CCTV-I10-123.7-EB",
+            "ip": "10.175.244.77",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_123_8_WB": {
+            "name": "CCTV-I10-123.8-WB",
+            "ip": "10.175.244.80",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_124_7_WB": {
+            "name": "CCTV-I10-124.7-WB",
+            "ip": "10.175.244.83",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_126_8_WB": {
+            "name": "CCTV-I10-126.8-WB",
+            "ip": "10.173.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_128_3_EB": {
+            "name": "CCTV-I10-128.3-EB",
+            "ip": "10.173.244.23",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_129_5_M": {
+            "name": "CCTV-I10-129.5-M",
+            "ip": "10.173.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_130_7_EB": {
+            "name": "CCTV-I10-130.7-EB",
+            "ip": "10.173.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_132_2_WB": {
+            "name": "CCTV-I10-132.2-WB",
+            "ip": "10.173.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_133_1_EB": {
+            "name": "CCTV-I10-133.1-EB",
+            "ip": "10.173.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_134_9_WB": {
+            "name": "CCTV-I10-134.9-WB",
+            "ip": "10.173.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_136_2_EB": {
+            "name": "CCTV-I10-136.2-EB",
+            "ip": "10.173.244.59",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_137_8_EB": {
+            "name": "CCTV-I10-137.8-EB",
+            "ip": "10.173.244.65",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_139_0_EB": {
+            "name": "CCTV-I10-139.0-EB",
+            "ip": "10.173.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_139_9_EB": {
+            "name": "CCTV-I10-139.9-EB",
+            "ip": "10.173.244.71",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_141_8_M": {
+            "name": "CCTV-I10-141.8-M",
+            "ip": "10.173.244.80",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_144_3_EB": {
+            "name": "CCTV-I10-144.3-EB",
+            "ip": "10.173.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_146_2_EB": {
+            "name": "CCTV-I10-146.2-EB",
+            "ip": "10.173.244.92",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_147_2_EB": {
+            "name": "CCTV-I10-147.2-EB",
+            "ip": "10.173.244.95",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_148_9_EB": {
+            "name": "CCTV-I10-148.9-EB",
+            "ip": "10.173.244.98",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_150_1_WB": {
+            "name": "CCTV-I10-150.1-WB",
+            "ip": "10.173.244.101",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_151_8_M": {
+            "name": "CCTV-I10-151.8-M",
+            "ip": "10.173.244.107",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_152_8_EB": {
+            "name": "CCTV-I10-152.8-EB",
+            "ip": "10.173.244.113",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_152_8_WB": {
+            "name": "CCTV-I10-152.8-WB",
+            "ip": "10.173.244.116",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_153_4_EB": {
+            "name": "CCTV-I10-153.4-EB",
+            "ip": "10.173.244.119",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_154_6_WB": {
+            "name": "CCTV-I10-154.6-WB",
+            "ip": "10.173.244.125",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_154_7_EB": {
+            "name": "CCTV-I10-154.7-EB",
+            "ip": "10.173.244.122",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_155_6_EB": {
+            "name": "CCTV-I10-155.6-EB",
+            "ip": "10.173.244.128",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_156_5_EB": {
+            "name": "CCTV-I10-156.5-EB",
+            "ip": "10.173.244.137",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_156_5_WB": {
+            "name": "CCTV-I10-156.5-WB",
+            "ip": "10.173.244.137",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_157_0_EB": {
+            "name": "CCTV-I10-157.0-EB",
+            "ip": "10.173.244.140",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_157_0_WB": {
+            "name": "CCTV-I10-157.0-WB",
+            "ip": "10.173.244.143",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_159_1_WB": {
+            "name": "CCTV-I10-159.1-WB",
+            "ip": "10.173.244.155",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_160_1_M": {
+            "name": "CCTV-I10-160.1-M",
+            "ip": "10.173.244.164",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_161_1RA_EB": {
+            "name": "CCTV-I10-161.1RA-EB",
+            "ip": "10.162.244.27",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_161_2_EB": {
+            "name": "CCTV-I10-161.2-EB",
+            "ip": "10.162.244.23",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_161_2_WB": {
+            "name": "CCTV-I10-161.2-WB",
+            "ip": "10.162.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_162_1_WB": {
+            "name": "CCTV-I10-162.1-WB",
+            "ip": "10.162.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_162_2_EB": {
+            "name": "CCTV-I10-162.2-EB",
+            "ip": "10.162.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_163_0_EB": {
+            "name": "CCTV-I10-163.0-EB",
+            "ip": "10.162.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_163_0_WB": {
+            "name": "CCTV-I10-163.0-WB",
+            "ip": "10.162.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_163_9_EB": {
+            "name": "CCTV-I10-163.9-EB",
+            "ip": "10.162.244.38",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_165_4_EB": {
+            "name": "CCTV-I10-165.4-EB",
+            "ip": "10.162.244.44",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_166_4_EB": {
+            "name": "CCTV-I10-166.4-EB",
+            "ip": "10.162.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_166_5_WB": {
+            "name": "CCTV-I10-166.5-WB",
+            "ip": "10.162.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_169_6_EB": {
+            "name": "CCTV-I10-169.6-EB",
+            "ip": "10.162.244.62",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_170_2_WB": {
+            "name": "CCTV-I10-170.2-WB",
+            "ip": "10.162.244.65",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_170_8_EB": {
+            "name": "CCTV-I10-170.8-EB",
+            "ip": "10.162.244.68",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_171_0_EB": {
+            "name": "CCTV-I10-171.0-EB",
+            "ip": "10.162.244.71",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_171_6_EB": {
+            "name": "CCTV-I10-171.6-EB",
+            "ip": "10.162.244.74",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_172_9_EB": {
+            "name": "CCTV-I10-172.9-EB",
+            "ip": "10.162.244.77",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_172_9_WB": {
+            "name": "CCTV-I10-172.9-WB",
+            "ip": "10.162.244.80",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_173_7_M": {
+            "name": "CCTV-I10-173.7-M",
+            "ip": "10.162.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_175_4_EB": {
+            "name": "CCTV-I10-175.4-EB",
+            "ip": "10.162.244.95",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_177_0_WB": {
+            "name": "CCTV-I10-177.0-WB",
+            "ip": "10.162.244.98",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_178_1_EB": {
+            "name": "CCTV-I10-178.1-EB",
+            "ip": "10.162.244.101",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_179_1_EB": {
+            "name": "CCTV-I10-179.1-EB",
+            "ip": "10.162.244.104",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_180_6_EB": {
+            "name": "CCTV-I10-180.6-EB",
+            "ip": "10.162.244.110",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_182_3_EB": {
+            "name": "CCTV-I10-182.3-EB",
+            "ip": "10.162.244.116",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_183_7_EB": {
+            "name": "CCTV-I10-183.7-EB",
+            "ip": "10.162.244.119",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_184_2_WB": {
+            "name": "CCTV-I10-184.2-WB",
+            "ip": "10.162.244.122",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_184_9_EB": {
+            "name": "CCTV-I10-184.9-EB",
+            "ip": "10.162.244.125",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_186_1_EB": {
+            "name": "CCTV-I10-186.1-EB",
+            "ip": "10.162.244.131",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_186_1_WB": {
+            "name": "CCTV-I10-186.1-WB",
+            "ip": "10.162.244.128",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_187_0_EB": {
+            "name": "CCTV-I10-187.0-EB",
+            "ip": "10.162.244.137",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_187_0_WB": {
+            "name": "CCTV-I10-187.0-WB",
+            "ip": "10.162.244.134",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_188_4_EB": {
+            "name": "CCTV-I10-188.4-EB",
+            "ip": "10.162.244.143",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_188_4_WB": {
+            "name": "CCTV-I10-188.4-WB",
+            "ip": "10.162.244.140",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_189_5_EB": {
+            "name": "CCTV-I10-189.5-EB",
+            "ip": "10.161.244.10",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_190_4_EB": {
+            "name": "CCTV-I10-190.4-EB",
+            "ip": "10.161.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_191_6_WB": {
+            "name": "CCTV-I10-191.6-WB",
+            "ip": "10.161.244.25",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_192_2_EB": {
+            "name": "CCTV-I10-192.2-EB",
+            "ip": "10.161.244.30",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_193_1_EB": {
+            "name": "CCTV-I10-193.1-EB",
+            "ip": "10.161.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_193_9_WB": {
+            "name": "CCTV-I10-193.9-WB",
+            "ip": "10.161.244.45",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_194_6_EB": {
+            "name": "CCTV-I10-194.6-EB",
+            "ip": "10.161.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_195_4_EB": {
+            "name": "CCTV-I10-195.4-EB",
+            "ip": "10.161.244.55",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_196_5_EB": {
+            "name": "CCTV-I10-196.5-EB",
+            "ip": "10.161.244.60",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_197_2_EB": {
+            "name": "CCTV-I10-197.2-EB",
+            "ip": "10.161.244.75",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_198_1_EB": {
+            "name": "CCTV-I10-198.1-EB",
+            "ip": "10.161.244.80",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_198_7_EB": {
+            "name": "CCTV-I10-198.7-EB",
+            "ip": "10.161.244.85",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_198_7_WB": {
+            "name": "CCTV-I10-198.7-WB",
+            "ip": "10.161.244.86",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_199_8_EB": {
+            "name": "CCTV-I10-199.8-EB",
+            "ip": "10.161.244.90",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_200_4_EB": {
+            "name": "CCTV-I10-200.4-EB",
+            "ip": "10.161.244.100",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_200_6_EB": {
+            "name": "CCTV-I10-200.6-EB",
+            "ip": "10.161.244.110",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_201_6_WB": {
+            "name": "CCTV-I10-201.6-WB",
+            "ip": "10.161.244.115",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_202_3_EB": {
+            "name": "CCTV-I10-202.3-EB",
+            "ip": "10.161.244.120",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_202_6_EB": {
+            "name": "CCTV-I10-202.6-EB",
+            "ip": "10.161.244.125",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_203_6_WB": {
+            "name": "CCTV-I10-203.6-WB",
+            "ip": "10.161.244.130",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_204_6_EB": {
+            "name": "CCTV-I10-204.6-EB",
+            "ip": "10.161.244.140",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_205_1_EB": {
+            "name": "CCTV-I10-205.1-EB",
+            "ip": "10.161.244.145",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_205_4_EB": {
+            "name": "CCTV-I10-205.4-EB",
+            "ip": "10.161.244.150",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_206_6_WB": {
+            "name": "CCTV-I10-206.6-WB",
+            "ip": "10.161.244.160",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_207_4_EB": {
+            "name": "CCTV-I10-207.4-EB",
+            "ip": "10.161.244.165",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_208_2_EB": {
+            "name": "CCTV-I10-208.2-EB",
+            "ip": "10.161.244.170",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_209_0_EB": {
+            "name": "CCTV-I10-209.0-EB",
+            "ip": "10.161.244.175",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_209_8_WB": {
+            "name": "CCTV-I10-209.8-WB",
+            "ip": "10.161.244.180",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_210_2_EB": {
+            "name": "CCTV-I10-210.2-EB",
+            "ip": "10.167.8.200",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_211_2_EB": {
+            "name": "CCTV-I10-211.2-EB",
+            "ip": "10.167.8.201",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_212_2_EB": {
+            "name": "CCTV-I10-212.2-EB",
+            "ip": "10.167.8.202",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_213_2_EB": {
+            "name": "CCTV-I10-213.2-EB",
+            "ip": "10.167.8.203",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_214_4_EB": {
+            "name": "CCTV-I10-214.4-EB",
+            "ip": "10.167.8.204",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_215_2_EB": {
+            "name": "CCTV-I10-215.2-EB",
+            "ip": "10.167.8.205",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_216_3_M": {
+            "name": "CCTV-I10-216.3-M",
+            "ip": "10.167.8.206",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_217_1_WB": {
+            "name": "CCTV-I10-217.1-WB",
+            "ip": "10.167.8.207",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_218_0_EB": {
+            "name": "CCTV-I10-218.0-EB",
+            "ip": "10.167.8.209",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_220_0_WB": {
+            "name": "CCTV-I10-220.0-WB",
+            "ip": "10.167.8.210",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_221_0_M": {
+            "name": "CCTV-I10-221.0-M",
+            "ip": "10.167.8.211",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_221_7_EB": {
+            "name": "CCTV-I10-221.7-EB",
+            "ip": "10.167.8.212",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_222_8_EB": {
+            "name": "CCTV-I10-222.8-EB",
+            "ip": "10.167.8.213",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_223_8_WB": {
+            "name": "CCTV-I10-223.8-WB",
+            "ip": "10.167.8.214",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_224_6_M": {
+            "name": "CCTV-I10-224.6-M",
+            "ip": "10.167.8.215",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_225_6_EB": {
+            "name": "CCTV-I10-225.6-EB",
+            "ip": "10.167.8.216",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_226_8_WB": {
+            "name": "CCTV-I10-226.8-WB",
+            "ip": "10.167.8.217",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_228_5_WB": {
+            "name": "CCTV-I10-228.5-WB",
+            "ip": "10.167.8.219",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_229_4_EB": {
+            "name": "CCTV-I10-229.4-EB",
+            "ip": "10.167.8.220",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_230_5_EB": {
+            "name": "CCTV-I10-230.5-EB",
+            "ip": "10.167.8.221",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_231_5_EB": {
+            "name": "CCTV-I10-231.5-EB",
+            "ip": "10.167.8.222",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_232_4_M": {
+            "name": "CCTV-I10-232.4-M",
+            "ip": "10.167.8.223",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_234_3_EB": {
+            "name": "CCTV-I10-234.3-EB",
+            "ip": "10.167.8.224",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I10_240_3_WB": {
+            "name": "CCTV-I10-240.3-WB",
+            "ip": "10.167.8.225",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_000_1_EB": {
+            "name": "CCTV-I110-000.1-EB",
+            "ip": "10.164.244.143",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_000_2_SB": {
+            "name": "CCTV-I110-000.2-SB",
+            "ip": "10.164.244.146",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_001_5_M": {
+            "name": "CCTV-I110-001.5-M",
+            "ip": "10.164.244.152",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_002_3_NB": {
+            "name": "CCTV-I110-002.3-NB",
+            "ip": "10.164.244.158",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_002_9_SB": {
+            "name": "CCTV-I110-002.9-SB",
+            "ip": "10.164.244.161",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_004_0_SB": {
+            "name": "CCTV-I110-004.0-SB",
+            "ip": "10.164.244.170",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_I110_004_7_SB": {
+            "name": "CCTV-I110-004.7-SB",
+            "ip": "10.164.244.173",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR30_000_2_WB": {
+            "name": "CCTV-SR30-000.2-WB",
+            "ip": "10.164.244.207",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR30_000_6_EB": {
+            "name": "CCTV-SR30-000.6-EB",
+            "ip": "10.164.244.201",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR30_001_6_EB_A": {
+            "name": "CCTV-SR30-001.6-EB-A",
+            "ip": "10.164.244.197",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR30_03_4_WB": {
+            "name": "CCTV-SR30-03.4-WB",
+            "ip": "10.164.244.189",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_10_9_NB": {
+            "name": "CCTV-SR75-BAY-10.9-NB",
+            "ip": "10.169.244.20",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_13_2_NB": {
+            "name": "CCTV-SR75-BAY-13.2-NB",
+            "ip": "10.169.244.23",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_15_3_SB": {
+            "name": "CCTV-SR75-BAY-15.3-SB",
+            "ip": "10.169.244.26",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_18_7_SB": {
+            "name": "CCTV-SR75-BAY-18.7-SB",
+            "ip": "10.169.244.29",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_21_1_SB": {
+            "name": "CCTV-SR75-BAY-21.1-SB",
+            "ip": "10.169.244.32",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_22_2_NB": {
+            "name": "CCTV-SR75-BAY-22.2-NB",
+            "ip": "10.169.244.35",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_24_2_NB": {
+            "name": "CCTV-SR75-BAY-24.2-NB",
+            "ip": "10.169.244.41",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_26_1_SB": {
+            "name": "CCTV-SR75-BAY-26.1-SB",
+            "ip": "10.169.244.44",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_28_3_SB": {
+            "name": "CCTV-SR75-BAY-28.3-SB",
+            "ip": "10.169.244.47",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_30_5_SB": {
+            "name": "CCTV-SR75-BAY-30.5-SB",
+            "ip": "10.169.244.50",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_BAY_33_0_SB": {
+            "name": "CCTV-SR75-BAY-33.0-SB",
+            "ip": "10.169.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_01_0_NB": {
+            "name": "CCTV-SR75-JAC-01.0-NB",
+            "ip": "10.173.244.167",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_02_8_SB": {
+            "name": "CCTV-SR75-JAC-02.8-SB",
+            "ip": "10.173.244.170",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_04_8_SB": {
+            "name": "CCTV-SR75-JAC-04.8-SB",
+            "ip": "10.173.244.173",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_07_1_NB": {
+            "name": "CCTV-SR75-JAC-07.1-NB",
+            "ip": "10.173.244.176",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_09_1_SB": {
+            "name": "CCTV-SR75-JAC-09.1-SB",
+            "ip": "10.173.244.179",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_11_4_NB": {
+            "name": "CCTV-SR75-JAC-11.4-NB",
+            "ip": "10.173.244.182",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_13_0_NB": {
+            "name": "CCTV-SR75-JAC-13.0-NB",
+            "ip": "10.173.244.186",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_13_3_NB": {
+            "name": "CCTV-SR75-JAC-13.3-NB",
+            "ip": "10.173.244.184",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_13_6_NB": {
+            "name": "CCTV-SR75-JAC-13.6-NB",
+            "ip": "10.173.244.183",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_14_7_NB": {
+            "name": "CCTV-SR75-JAC-14.7-NB",
+            "ip": "10.173.144.185",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_16_2_SB": {
+            "name": "CCTV-SR75-JAC-16.2-SB",
+            "ip": "10.173.144.188",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_18_4_SB": {
+            "name": "CCTV-SR75-JAC-18.4-SB",
+            "ip": "10.173.144.191",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_20_2_NB": {
+            "name": "CCTV-SR75-JAC-20.2-NB",
+            "ip": "10.173.144.194",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_22_6_SB": {
+            "name": "CCTV-SR75-JAC-22.6-SB",
+            "ip": "10.173.144.197",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_23_0_SB": {
+            "name": "CCTV-SR75-JAC-23.0-SB",
+            "ip": "10.173.144.197",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_24_3_SB": {
+            "name": "CCTV-SR75-JAC-24.3-SB",
+            "ip": "10.173.144.200",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_26_8_SB": {
+            "name": "CCTV-SR75-JAC-26.8-SB",
+            "ip": "10.173.144.203",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_28_5_SB": {
+            "name": "CCTV-SR75-JAC-28.5-SB",
+            "ip": "10.173.144.206",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_30_6_SB": {
+            "name": "CCTV-SR75-JAC-30.6-SB",
+            "ip": "10.173.144.212",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR75_JAC_31_9_SB": {
+            "name": "CCTV-SR75-JAC-31.9-SB",
+            "ip": "10.173.144.215",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_SR85_33_0SB": {
+            "name": "CCTV-SR85_33.0SB",
+            "ip": "10.169.244.53",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_US98_at_Legendary_WB": {
+            "name": "CCTV-US98@Legendary-WB",
+            "ip": "10.172.244.201",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_US98_at_Triumph_EB": {
+            "name": "CCTV-US98@Triumph-EB",
+            "ip": "10.172.244.203",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        },
+        "CCTV_BAY_SR75_at_SR388": {
+            "name": "CCTV-BAY-SR75@SR388",
+            "ip": "192.168.2.30",
+            "reboot_url": "/api/reboot",
+            "snapshot_url": "/api/snapshot"
+        }
+    }
+}

@@ -1,0 +1,44 @@
+[Unit]
+Description=FDOT CCTV Operations Tool v2
+Documentation=file:///var/cctv-tool-v2/README.md
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/var/cctv-tool-v2
+
+# Environment
+EnvironmentFile=/var/cctv-tool-v2/.env
+
+# Python virtual environment activation and startup
+ExecStart=/var/cctv-tool-v2/venv/bin/python3 /var/cctv-tool-v2/CCTV_OperationsTool_Fixed.py
+
+# Restart policy for reliability
+Restart=always
+RestartSec=10
+StartLimitInterval=200
+StartLimitBurst=5
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cctv-tool
+
+# Security hardening (adjust as needed for camera access)
+PrivateTmp=true
+NoNewPrivileges=true
+
+# Graceful shutdown
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

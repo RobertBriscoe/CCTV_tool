@@ -1,0 +1,100 @@
+# ==============================================================================
+# CCTV Tool v2 - Git Ignore File
+# ==============================================================================
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/*.log
+*.log
+
+# Snapshots and output
+snapshots/*
+!snapshots/.gitkeep
+output/
+temp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Configuration backups (may contain secrets)
+camera_config.json.backup*
+*.json.backup
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.pytest_cache/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Sensitive data
+secrets/
+credentials/
+certs/
+*.pem
+*.key
+*.crt
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Documentation builds
+docs/_build/
+site/
