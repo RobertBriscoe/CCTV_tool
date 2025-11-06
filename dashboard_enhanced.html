@@ -165,9 +165,24 @@
                 <label class="form-label">Interval (seconds): *</label>
                 <input type="number" class="form-input" id="snapshotInterval" value="300" min="30" max="3600" />
             </div>
+            <div class="form-group">
+                <label class="form-label">Email Results To:</label>
+                <input type="text" class="form-input" id="snapshotEmails" placeholder="email1@domain.com, email2@domain.com (optional)" />
+                <small style="color: #666; font-size: 12px;">Leave blank for no email, or enter comma-separated addresses</small>
+            </div>
+            <div id="snapshotProgressContainer" style="display: none; margin-top: 15px;">
+                <div style="margin-bottom: 10px;">
+                    <strong>Capture in Progress...</strong>
+                    <span id="snapshotProgressText" style="float: right; font-weight: bold; color: #003366;">0%</span>
+                </div>
+                <div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 25px; overflow: hidden;">
+                    <div id="snapshotProgressBar" style="width: 0%; background: linear-gradient(90deg, #003366, #0066cc); height: 100%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;"></div>
+                </div>
+                <div id="snapshotProgressDetails" style="margin-top: 8px; font-size: 13px; color: #666;"></div>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
-                <button class="btn btn-success" onclick="confirmSnapshot()">Start Capture</button>
+                <button class="btn btn-success" id="snapshotStartBtn" onclick="confirmSnapshot()">Start Capture</button>
             </div>
         </div>
     </div>
@@ -180,6 +195,8 @@
         let currentFilter = 'all';
         let selectedCameras = new Set();
         let currentRebootCamera = null;
+        let currentSnapshotSession = null;
+        let snapshotProgressInterval = null;
 
         // Load cameras on page load
         async function loadCameras() {
@@ -425,7 +442,10 @@
         }
 
         function closeSnapshotModal() {
+            stopSnapshotProgress();
             document.getElementById('snapshotModal').classList.remove('show');
+            document.getElementById('snapshotProgressContainer').style.display = 'none';
+            document.getElementById('snapshotStartBtn').disabled = false;
         }
 
         // Confirm snapshot
@@ -433,42 +453,111 @@
             const operator = document.getElementById('snapshotOperator').value.trim();
             const duration = parseInt(document.getElementById('snapshotDuration').value);
             const interval = parseInt(document.getElementById('snapshotInterval').value);
+            const emailInput = document.getElementById('snapshotEmails').value.trim();
 
             if (!operator) {
                 showNotification('Please enter operator name', 'error');
                 return;
             }
 
+            // Parse email addresses
+            const emailAddresses = emailInput ? emailInput.split(',').map(e => e.trim()).filter(e => e) : [];
+
             const cameras = Array.from(selectedCameras).map(id => {
                 const cam = allCameras.find(c => c.id === id);
                 return { ip: cam.ip, name: cam.name };
             });
 
+            // Disable start button and show progress
+            document.getElementById('snapshotStartBtn').disabled = true;
+            document.getElementById('snapshotProgressContainer').style.display = 'block';
+            updateSnapshotProgress(0, duration, 0, 0, cameras.length);
+
             try {
+                const payload = {
+                    cameras: cameras,
+                    duration_minutes: duration,
+                    interval_seconds: interval,
+                    operator: operator,
+                    output_format: 'shared_folder'
+                };
+
+                // Add email settings if addresses provided
+                if (emailAddresses.length > 0) {
+                    payload.email_report = true;
+                    payload.email_recipients = emailAddresses;
+                }
+
                 const response = await fetch('/api/snapshot/capture', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cameras: cameras,
-                        duration_minutes: duration,
-                        interval_seconds: interval,
-                        operator: operator
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    showNotification(`Snapshot capture started for ${cameras.length} camera(s)!`, 'success');
+                    currentSnapshotSession = result.session_id || Date.now().toString();
+                    showNotification(`Snapshot capture started!`, 'info');
+                    startSnapshotProgress(duration, cameras.length);
                 } else {
                     showNotification(`Snapshot failed: ${result.message || 'Unknown error'}`, 'error');
+                    document.getElementById('snapshotProgressContainer').style.display = 'none';
+                    document.getElementById('snapshotStartBtn').disabled = false;
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');
+                document.getElementById('snapshotProgressContainer').style.display = 'none';
+                document.getElementById('snapshotStartBtn').disabled = false;
             }
 
-            closeSnapshotModal();
             deselectAll();
+        }
+
+        // Start snapshot progress tracking
+        function startSnapshotProgress(durationMinutes, cameraCount) {
+            const startTime = Date.now();
+            const endTime = startTime + (durationMinutes * 60 * 1000);
+
+            snapshotProgressInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                const total = endTime - startTime;
+                const progress = Math.min(100, (elapsed / total) * 100);
+                const elapsedMinutes = Math.floor(elapsed / 60000);
+                const elapsedSeconds = Math.floor((elapsed % 60000) / 1000);
+
+                updateSnapshotProgress(progress, durationMinutes, elapsedMinutes, elapsedSeconds, cameraCount);
+
+                if (progress >= 100) {
+                    stopSnapshotProgress();
+                    showNotification('Snapshot capture complete! Check shared folder for results.', 'success');
+                    setTimeout(() => closeSnapshotModal(), 2000);
+                }
+            }, 1000);
+        }
+
+        // Stop snapshot progress tracking
+        function stopSnapshotProgress() {
+            if (snapshotProgressInterval) {
+                clearInterval(snapshotProgressInterval);
+                snapshotProgressInterval = null;
+            }
+        }
+
+        // Update snapshot progress display
+        function updateSnapshotProgress(percent, totalMinutes, elapsedMin, elapsedSec, cameraCount) {
+            const progressBar = document.getElementById('snapshotProgressBar');
+            const progressText = document.getElementById('snapshotProgressText');
+            const progressDetails = document.getElementById('snapshotProgressDetails');
+
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = Math.floor(percent) + '%';
+            progressText.textContent = Math.floor(percent) + '%';
+
+            const remainingMin = totalMinutes - elapsedMin;
+            const remainingDisplay = remainingMin > 0 ? `${remainingMin} min remaining` : 'Finishing...';
+            progressDetails.textContent = `${cameraCount} camera(s) • ${elapsedMin}m ${elapsedSec}s elapsed • ${remainingDisplay}`;
         }
 
         // Show notification

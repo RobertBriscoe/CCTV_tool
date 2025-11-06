@@ -1309,14 +1309,17 @@ def reboot_camera():
 def capture_snapshots():
     """Capture snapshots with duration and interval controls"""
     data = request.json
-    
+
     if 'cameras' not in data:
         return jsonify({'error': 'cameras field required'}), 400
-    
+
     duration_minutes = data.get('duration_minutes', 5)
     interval_seconds = data.get('interval_seconds', 30)
     output_format = data.get('output_format', 'shared_folder')  # Default to shared folder
-    
+
+    # Generate session ID
+    session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     # Run capture in background thread
     def capture_task():
         results = snapshot_manager.capture_multiple_snapshots(
@@ -1325,7 +1328,7 @@ def capture_snapshots():
             interval_seconds=interval_seconds,
             output_format=output_format
         )
-        
+
         # Send email if requested
         if data.get('email_report'):
             email_manager.send_snapshot_report(
@@ -1333,12 +1336,13 @@ def capture_snapshots():
                 to_emails=data.get('email_recipients', EMAIL_CONFIG['maintenance_team']),
                 include_zip=data.get('include_zip', False)
             )
-    
+
     thread = threading.Thread(target=capture_task, daemon=True)
     thread.start()
-    
+
     return jsonify({
         'message': 'Snapshot capture started',
+        'session_id': session_id,
         'duration_minutes': duration_minutes,
         'interval_seconds': interval_seconds,
         'cameras': len(data['cameras'])
