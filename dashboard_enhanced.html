@@ -353,7 +353,12 @@
                     }
                     showNotification(message, 'success');
                 } else {
-                    showNotification(`Reboot failed: ${result.message || 'Unknown error'}`, 'error');
+                    let message = `✗ Reboot failed: ${result.message || 'Unknown error'}`;
+                    if (result.ticket_id) {
+                        message += `\n\n🎫 MIMS Ticket Created: #${result.ticket_id}`;
+                        message += `\n(Failure documented for maintenance team)`;
+                    }
+                    showNotification(message, 'error');
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');
