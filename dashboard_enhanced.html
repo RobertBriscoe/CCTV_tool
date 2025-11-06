@@ -75,6 +75,15 @@
         .notification.error { border-left: 6px solid #dc3545; background: #fff5f5; }
         .notification.info { border-left: 6px solid #17a2b8; background: #f0f9ff; }
         @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+
+        /* Floating Progress Indicator */
+        .progress-float { position: fixed; bottom: 20px; right: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 6px 16px rgba(0,0,0,0.3); z-index: 1999; display: none; min-width: 400px; max-width: 500px; border-left: 6px solid #003366; }
+        .progress-float.show { display: block; animation: slideUp 0.3s ease; }
+        .progress-float-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .progress-float-title { font-weight: bold; color: #003366; font-size: 16px; }
+        .progress-float-close { cursor: pointer; font-size: 20px; color: #999; line-height: 1; padding: 0 5px; }
+        .progress-float-close:hover { color: #333; }
+        @keyframes slideUp { from { transform: translateY(400px); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -170,16 +179,6 @@
                 <input type="text" class="form-input" id="snapshotEmails" placeholder="email1@domain.com, email2@domain.com (optional)" />
                 <small style="color: #666; font-size: 12px;">Leave blank for no email, or enter comma-separated addresses</small>
             </div>
-            <div id="snapshotProgressContainer" style="display: none; margin-top: 15px;">
-                <div style="margin-bottom: 10px;">
-                    <strong>Capture in Progress...</strong>
-                    <span id="snapshotProgressText" style="float: right; font-weight: bold; color: #003366;">0%</span>
-                </div>
-                <div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 25px; overflow: hidden;">
-                    <div id="snapshotProgressBar" style="width: 0%; background: linear-gradient(90deg, #003366, #0066cc); height: 100%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;"></div>
-                </div>
-                <div id="snapshotProgressDetails" style="margin-top: 8px; font-size: 13px; color: #666;"></div>
-            </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
                 <button class="btn btn-success" id="snapshotStartBtn" onclick="confirmSnapshot()">Start Capture</button>
@@ -189,6 +188,21 @@
 
     <!-- Notification -->
     <div id="notification" class="notification"></div>
+
+    <!-- Floating Progress Indicator -->
+    <div id="snapshotProgressFloat" class="progress-float">
+        <div class="progress-float-header">
+            <div class="progress-float-title">📸 Capturing Snapshots...</div>
+            <div class="progress-float-close" onclick="hideSnapshotProgress()">×</div>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <span id="snapshotProgressText" style="font-weight: bold; color: #003366; font-size: 18px;">0%</span>
+        </div>
+        <div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 25px; overflow: hidden;">
+            <div id="snapshotProgressBar" style="width: 0%; background: linear-gradient(90deg, #003366, #0066cc); height: 100%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;"></div>
+        </div>
+        <div id="snapshotProgressDetails" style="margin-top: 10px; font-size: 13px; color: #666;"></div>
+    </div>
 
     <script>
         let allCameras = [];
@@ -442,10 +456,13 @@
         }
 
         function closeSnapshotModal() {
-            stopSnapshotProgress();
             document.getElementById('snapshotModal').classList.remove('show');
-            document.getElementById('snapshotProgressContainer').style.display = 'none';
             document.getElementById('snapshotStartBtn').disabled = false;
+        }
+
+        function hideSnapshotProgress() {
+            stopSnapshotProgress();
+            document.getElementById('snapshotProgressFloat').classList.remove('show');
         }
 
         // Confirm snapshot
@@ -467,11 +484,6 @@
                 const cam = allCameras.find(c => c.id === id);
                 return { ip: cam.ip, name: cam.name };
             });
-
-            // Disable start button and show progress
-            document.getElementById('snapshotStartBtn').disabled = true;
-            document.getElementById('snapshotProgressContainer').style.display = 'block';
-            updateSnapshotProgress(0, duration, 0, 0, cameras.length);
 
             try {
                 const payload = {
@@ -498,17 +510,18 @@
 
                 if (response.ok) {
                     currentSnapshotSession = result.session_id || Date.now().toString();
-                    showNotification(`Snapshot capture started!`, 'info');
+                    showNotification(`Snapshot capture started! Progress shown in bottom-right corner.`, 'success');
+
+                    // Close modal and show floating progress
+                    closeSnapshotModal();
+                    document.getElementById('snapshotProgressFloat').classList.add('show');
+                    updateSnapshotProgress(0, duration, 0, 0, cameras.length);
                     startSnapshotProgress(duration, cameras.length);
                 } else {
                     showNotification(`Snapshot failed: ${result.message || 'Unknown error'}`, 'error');
-                    document.getElementById('snapshotProgressContainer').style.display = 'none';
-                    document.getElementById('snapshotStartBtn').disabled = false;
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');
-                document.getElementById('snapshotProgressContainer').style.display = 'none';
-                document.getElementById('snapshotStartBtn').disabled = false;
             }
 
             deselectAll();
@@ -532,7 +545,7 @@
                 if (progress >= 100) {
                     stopSnapshotProgress();
                     showNotification('Snapshot capture complete! Check shared folder for results.', 'success');
-                    setTimeout(() => closeSnapshotModal(), 2000);
+                    setTimeout(() => hideSnapshotProgress(), 3000);
                 }
             }, 1000);
         }
