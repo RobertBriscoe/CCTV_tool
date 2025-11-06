@@ -69,11 +69,11 @@
         .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
         /* Notifications */
-        .notification { position: fixed; top: 20px; right: 20px; background: white; padding: 15px 20px; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 2000; display: none; min-width: 300px; }
+        .notification { position: fixed; top: 20px; right: 20px; background: white; padding: 20px 25px; border-radius: 8px; box-shadow: 0 6px 12px rgba(0,0,0,0.2); z-index: 2000; display: none; min-width: 350px; max-width: 500px; white-space: pre-line; font-size: 16px; font-weight: 500; }
         .notification.show { display: block; animation: slideIn 0.3s ease; }
-        .notification.success { border-left: 4px solid #28a745; }
-        .notification.error { border-left: 4px solid #dc3545; }
-        .notification.info { border-left: 4px solid #17a2b8; }
+        .notification.success { border-left: 6px solid #28a745; background: #f0fff4; }
+        .notification.error { border-left: 6px solid #dc3545; background: #fff5f5; }
+        .notification.info { border-left: 6px solid #17a2b8; background: #f0f9ff; }
         @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
     </style>
 </head>
@@ -347,9 +347,13 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    showNotification(`Camera ${currentRebootCamera.name} rebooted successfully!`, 'success');
+                    let message = `✓ Camera ${currentRebootCamera.name} rebooted successfully!`;
+                    if (result.ticket_id) {
+                        message += `\n\n🎫 MIMS Ticket Created: #${result.ticket_id}`;
+                    }
+                    showNotification(message, 'success');
                 } else {
-                    showNotification(`Reboot failed: ${result.error || 'Unknown error'}`, 'error');
+                    showNotification(`Reboot failed: ${result.message || 'Unknown error'}`, 'error');
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');
@@ -452,7 +456,7 @@
                 if (response.ok) {
                     showNotification(`Snapshot capture started for ${cameras.length} camera(s)!`, 'success');
                 } else {
-                    showNotification(`Snapshot failed: ${result.error || 'Unknown error'}`, 'error');
+                    showNotification(`Snapshot failed: ${result.message || 'Unknown error'}`, 'error');
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');

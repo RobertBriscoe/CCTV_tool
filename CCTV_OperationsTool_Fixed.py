@@ -561,8 +561,20 @@ class SnapshotCaptureManager:
                 
                 # Capture snapshot
                 snapshot_file = camera_path / f"{camera_name}_{timestamp}.jpg"
-                
-                capturer = EnhancedRTSPCapture(camera['rtsp_url'], camera_name)
+
+                # Build RTSP URL if not provided
+                if 'rtsp_url' in camera:
+                    rtsp_url = camera['rtsp_url']
+                else:
+                    # Build RTSP URL from IP
+                    cam_ip = camera.get('ip')
+                    rtsp_user = camera.get('username', CAMERA_DEFAULTS['onvif_user'])
+                    rtsp_pass = camera.get('password', CAMERA_DEFAULTS['onvif_pass'])
+                    rtsp_port = camera.get('rtsp_port', CAMERA_DEFAULTS['rtsp_port'])
+                    rtsp_path = camera.get('rtsp_path', CAMERA_DEFAULTS['rtsp_path'])
+                    rtsp_url = f"rtsp://{rtsp_user}:{rtsp_pass}@{cam_ip}:{rtsp_port}{rtsp_path}"
+
+                capturer = EnhancedRTSPCapture(rtsp_url, camera_name)
                 success, message = capturer.capture_snapshot(str(snapshot_file))
                 
                 results['total_captures'] += 1
