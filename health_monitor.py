@@ -10,6 +10,8 @@ import socket
 import logging
 import threading
 import pyodbc
+import requests
+from requests.auth import HTTPDigestAuth
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from dotenv import load_dotenv
@@ -229,25 +231,37 @@ class HealthCheckManager:
             Tuple of (success: bool, response_time_ms: int)
         """
         start_time = time.time()
-        # Try different snapshot URLs for different camera vendors
-        snapshot_urls = [
-            "/jpegpull/snapshot",              # Cohu cameras (ONVIF GetSnapshotUri)
-            "/axis-cgi/jpg/image.cgi",         # Axis cameras
-            "/snapshot.jpg",                    # Generic
-            "/cgi-bin/snapshot.cgi",           # Generic CGI
-            "/jpg/image.jpg",                  # Axis alternative
+
+        # Define camera configurations to try (vendor, path, auth_type, user, pass)
+        camera_configs = [
+            # Cohu cameras - Basic auth
+            ("Cohu", "/jpegpull/snapshot", "basic", username, password),
+            # Axis cameras - Digest auth with root/root
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "root"),
+            # Axis alternative paths
+            ("Axis", "/jpg/image.jpg", "digest", "root", "root"),
+            # Generic fallbacks
+            ("Generic", "/snapshot.jpg", "basic", username, password),
+            ("Generic", "/cgi-bin/snapshot.cgi", "basic", username, password),
         ]
 
-        for path in snapshot_urls:
+        for vendor, path, auth_type, user, pwd in camera_configs:
             try:
                 url = f"http://{ip}{path}"
-                response = requests.get(url, auth=(username, password), timeout=3)
+
+                # Use appropriate auth type
+                if auth_type == "digest":
+                    auth = HTTPDigestAuth(user, pwd)
+                else:
+                    auth = (user, pwd)
+
+                response = requests.get(url, auth=auth, timeout=3)
 
                 # Check if we got a valid image (>3KB and image content type)
                 if response.status_code == 200:
                     content_type = response.headers.get('Content-Type', '').lower()
                     if len(response.content) > 3000 and 'image' in content_type:
-                        logger.debug(f"Snapshot success for {ip} using {path}")
+                        logger.debug(f"Snapshot success for {ip} using {vendor} ({path})")
 
                         # Save snapshot to disk (overwrite existing)
                         try:
@@ -262,7 +276,7 @@ class HealthCheckManager:
                         return (True, response_time)
 
             except Exception as e:
-                logger.debug(f"Snapshot test failed for {ip}{path}: {e}")
+                logger.debug(f"Snapshot test failed for {ip}{path} ({vendor}): {e}")
                 continue
 
         return (False, 0)
