@@ -53,7 +53,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from typing import Optional, Dict, Any, List, Tuple
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 
 # Try to import ONVIF for camera reboots
@@ -72,6 +72,14 @@ try:
 except ImportError:
     MIMS_AVAILABLE = False
     print("WARNING: MIMS client not available. Ticket creation disabled.")
+
+# Try to import Health Monitor
+try:
+    from health_monitor import HealthCheckManager
+    HEALTH_MONITOR_AVAILABLE = True
+except ImportError:
+    HEALTH_MONITOR_AVAILABLE = False
+    print("WARNING: Health monitor not available.")
 
 # =============================================================================
 # CONFIGURATION
@@ -766,11 +774,12 @@ reboot_manager = None
 snapshot_manager = None
 email_manager = None
 mims_client = None
+health_manager = None
 
 def initialize_managers():
     """Initialize global managers"""
-    global reboot_manager, snapshot_manager, email_manager, mims_client
-    
+    global reboot_manager, snapshot_manager, email_manager, mims_client, health_manager
+
     # Initialize MIMS client if available
     if MIMS_AVAILABLE:
         try:
@@ -789,12 +798,26 @@ def initialize_managers():
                 logger.warning("MIMS credentials not provided (need username/password or token)")
         except Exception as e:
             logger.error(f"Failed to initialize MIMS client: {e}")
-    
+
     reboot_manager = CameraRebootManager(mims_client)
     snapshot_manager = SnapshotCaptureManager(STORAGE_CONFIG['base_path'])
     email_manager = EmailNotificationManager(EMAIL_CONFIG)
-    
+
+    # Initialize Health Monitor
+    if HEALTH_MONITOR_AVAILABLE:
+        try:
+            health_manager = HealthCheckManager(CAMERAS, DB_CONFIG)
+            logger.info("✓ Health monitor initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize health monitor: {e}")
+
     logger.info("✓ All managers initialized")
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files (snapshots, etc.)"""
+    static_dir = Path(__file__).parent / 'static'
+    return send_from_directory(static_dir, filename)
 
 @app.route('/', methods=['GET'])
 def dashboard():
@@ -1007,6 +1030,8 @@ def health_check():
             f"DATABASE={DB_CONFIG['database']};"
             f"UID={DB_CONFIG['username']};"
             f"PWD={DB_CONFIG['password']};"
+            f"PORT=1433;"
+            f"TDS_Version=7.4;"
             f"Connection Timeout={DB_CONFIG['timeout']};"
         )
         conn = pyodbc.connect(conn_str, timeout=5)
@@ -1386,6 +1411,125 @@ def get_config():
     })
 
 # =============================================================================
+# HEALTH MONITORING API
+# =============================================================================
+
+@app.route('/api/dashboard/health', methods=['GET'])
+def get_dashboard_health():
+    """Get camera health status for dashboard"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        # Get all camera statuses
+        statuses = health_manager.get_all_camera_status()
+
+        # Get statistics
+        stats = health_manager.get_health_statistics()
+
+        return jsonify({
+            'cameras': statuses,
+            'statistics': stats,
+            'last_updated': datetime.now().isoformat()
+        })
+    except Exception as e:
+        import traceback
+        logger.error(f"Error getting health data: {e}\n{traceback.format_exc()}")
+        return jsonify({'error': str(e), 'details': traceback.format_exc()}), 500
+
+@app.route('/api/camera/test', methods=['POST'])
+def test_camera():
+    """Manually test a specific camera's health"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        data = request.get_json()
+        camera_name = data.get('camera_name')
+        camera_ip = data.get('camera_ip')
+
+        if not camera_name or not camera_ip:
+            return jsonify({'error': 'camera_name and camera_ip required'}), 400
+
+        # Perform health check
+        result = health_manager.check_camera_health(camera_name, camera_ip, 'manual')
+
+        # Log to database
+        health_manager.log_health_check(result)
+
+        return jsonify({
+            'success': True,
+            'result': {
+                'camera_name': result['camera_name'],
+                'camera_ip': result['camera_ip'],
+                'status': result['status'],
+                'ping_success': result['ping_success'],
+                'snapshot_success': result['snapshot_success'],
+                'response_time_ms': result['response_time_ms'],
+                'timestamp': result['check_timestamp'].isoformat()
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error testing camera: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cameras/test-all', methods=['POST'])
+def test_all_cameras():
+    """Trigger manual health check for all cameras"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        # Start health check in background thread
+        import threading
+        thread = threading.Thread(target=health_manager.check_all_cameras, args=('manual',), daemon=True)
+        thread.start()
+
+        return jsonify({
+            'success': True,
+            'message': f'Health check started for {len(CAMERAS)} cameras'
+        })
+    except Exception as e:
+        logger.error(f"Error starting health check: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cameras/offline', methods=['GET'])
+def get_offline_cameras():
+    """Get list of offline cameras"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        statuses = health_manager.get_all_camera_status()
+        offline = [s for s in statuses if s['status'] in ['offline', 'degraded']]
+
+        return jsonify({
+            'offline_cameras': offline,
+            'count': len(offline)
+        })
+    except Exception as e:
+        logger.error(f"Error getting offline cameras: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cameras/problem', methods=['GET'])
+def get_problem_cameras():
+    """Get cameras with repeated failures"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        statuses = health_manager.get_all_camera_status()
+        problem = [s for s in statuses if s['consecutive_failures'] >= 3]
+
+        return jsonify({
+            'problem_cameras': problem,
+            'count': len(problem)
+        })
+    except Exception as e:
+        logger.error(f"Error getting problem cameras: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -1394,10 +1538,18 @@ def main():
     logger.info("="*70)
     logger.info("FDOT CCTV Operations Tool v6.0")
     logger.info("="*70)
-    
+
     # Initialize managers
     initialize_managers()
-    
+
+    # Start health monitoring background checks
+    if health_manager:
+        try:
+            health_manager.start_background_checks()
+            logger.info("✓ Health monitoring started")
+        except Exception as e:
+            logger.error(f"Failed to start health monitoring: {e}")
+
     # Print status
     print("\n" + "="*70)
     print("CCTV Operations Tool Started")
@@ -1406,6 +1558,7 @@ def main():
     print(f"{'✓' if ONVIF_AVAILABLE else '✗'} ONVIF Reboot: {'Available' if ONVIF_AVAILABLE else 'Not available'}")
     print(f"{'✓' if MIMS_AVAILABLE and mims_client else '✗'} MIMS Ticketing: {'Connected' if mims_client else 'Not connected'}")
     print(f"{'✓' if EMAIL_CONFIG['enabled'] else '✗'} Email Notifications: {'Enabled' if EMAIL_CONFIG['enabled'] else 'Disabled'}")
+    print(f"{'✓' if health_manager else '✗'} Health Monitoring: {'Active' if health_manager else 'Disabled'}")
     print(f"\nAPI Server: http://localhost:5000")
     print("="*70)
     

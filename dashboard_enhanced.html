@@ -44,7 +44,22 @@
         .camera-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .camera-checkbox { width: 18px; height: 18px; cursor: pointer; }
         .camera-name { font-weight: 600; color: #003366; flex: 1; }
+        .health-indicator { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; }
+        .health-online { background: #4caf50; box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); }
+        .health-degraded { background: #ff9800; box-shadow: 0 0 6px rgba(255, 152, 0, 0.6); }
+        .health-offline { background: #f44336; box-shadow: 0 0 6px rgba(244, 67, 54, 0.6); }
+        .health-unknown { background: #9e9e9e; }
         .camera-info { font-size: 14px; color: #666; margin: 4px 0; margin-left: 28px; }
+
+        .camera-snapshot { margin: 10px 0 10px 28px; border-radius: 6px; overflow: hidden; cursor: pointer; }
+        .camera-snapshot img { width: 100%; height: auto; display: block; transition: opacity 0.2s; }
+        .camera-snapshot img:hover { opacity: 0.9; }
+        .snapshot-placeholder { background: #f5f5f5; padding: 40px; text-align: center; color: #999; font-size: 12px; }
+
+        .snapshot-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+        .snapshot-modal-content { margin: 2% auto; display: block; max-width: 90%; max-height: 90%; }
+        .snapshot-modal-close { position: absolute; top: 20px; right: 40px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
+        .snapshot-modal-close:hover { color: #ccc; }
 
         .camera-actions { display: flex; gap: 8px; margin-top: 12px; margin-left: 28px; }
         .action-btn { padding: 6px 12px; font-size: 13px; border-radius: 4px; border: none; cursor: pointer; }
@@ -98,13 +113,25 @@
                 <div class="stat-value" id="totalCameras">-</div>
                 <div class="stat-label">Total Cameras</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="displayedCameras">-</div>
-                <div class="stat-label">Displayed</div>
+            <div class="stat-card" style="background: #e8f5e9;">
+                <div class="stat-value" style="color: #2e7d32;" id="onlineCameras">-</div>
+                <div class="stat-label">🟢 Online</div>
+            </div>
+            <div class="stat-card" style="background: #fff3e0;">
+                <div class="stat-value" style="color: #f57c00;" id="degradedCameras">-</div>
+                <div class="stat-label">🟡 Degraded</div>
+            </div>
+            <div class="stat-card" style="background: #ffebee;">
+                <div class="stat-value" style="color: #c62828;" id="offlineCameras">-</div>
+                <div class="stat-label">🔴 Offline</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="selectedCameras">0</div>
-                <div class="stat-label">Selected</div>
+                <div class="stat-value" id="systemHealth">-</div>
+                <div class="stat-label">System Health</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="problemCameras">-</div>
+                <div class="stat-label">Problem Cameras</div>
             </div>
         </div>
 
@@ -117,9 +144,14 @@
                 <button class="filter-btn" onclick="filterHighway('I110')">I-110</button>
                 <button class="filter-btn" onclick="filterHighway('US90')">US-90</button>
                 <button class="filter-btn" onclick="filterHighway('US98')">US-98</button>
+                <span style="margin: 0 10px; color: #ccc;">|</span>
+                <button class="filter-btn" onclick="filterHealth('online')">🟢 Online Only</button>
+                <button class="filter-btn" onclick="filterHealth('offline')">🔴 Offline Only</button>
+                <button class="filter-btn" onclick="filterHealth('problem')">⚠️ Problem Cameras</button>
             </div>
 
             <div class="bulk-actions">
+                <button class="btn btn-secondary" onclick="testAllCameras()">🔍 Test All</button>
                 <button class="btn btn-secondary" onclick="selectAll()">Select All</button>
                 <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
                 <button class="btn btn-danger" onclick="bulkReboot()" id="bulkRebootBtn" disabled>Reboot Selected</button>
@@ -206,7 +238,10 @@
 
     <script>
         let allCameras = [];
+        let healthData = {};
+        let healthStats = {};
         let currentFilter = 'all';
+        let healthFilter = 'all';
         let selectedCameras = new Set();
         let currentRebootCamera = null;
         let currentSnapshotSession = null;
@@ -215,42 +250,162 @@
         // Load cameras on page load
         async function loadCameras() {
             try {
+                console.log('Loading cameras...');
                 const response = await fetch('/api/cameras/list');
+                console.log('Response received:', response.status);
                 const data = await response.json();
+                console.log('Data parsed:', data.total, 'cameras');
                 allCameras = data.cameras;
                 document.getElementById('totalCameras').textContent = data.total;
-                displayCameras(allCameras);
+
+                // Display cameras immediately
+                const container = document.getElementById('cameraContainer');
+                container.innerHTML = '<div class="camera-grid">' + allCameras.map(cam => `
+                    <div class="camera-card ${selectedCameras.has(cam.id) ? 'selected' : ''}" id="card-${cam.id}">
+                        <div class="camera-header">
+                            <input type="checkbox" class="camera-checkbox"
+                                   ${selectedCameras.has(cam.id) ? 'checked' : ''}
+                                   onchange="toggleCamera('${cam.id}')" />
+                            <div class="camera-name">${cam.name}<span class="health-indicator health-unknown"></span></div>
+                        </div>
+                        <div class="camera-info">📍 ${cam.location}</div>
+                        <div class="camera-info">🌐 ${cam.ip}</div>
+                        <div class="camera-actions">
+                            <button class="action-btn reboot" onclick="showRebootModal('${cam.id}')">🔄 Reboot</button>
+                            <button class="action-btn snapshot" onclick="snapshotSingle('${cam.id}')">📸 Snapshot</button>
+                        </div>
+                    </div>
+                `).join('') + '</div>';
+
+                // Load health data after cameras are displayed
+                loadHealthData();
             } catch (error) {
-                document.getElementById('cameraContainer').innerHTML = '<div class="no-results">Error loading cameras</div>';
+                console.error('Error loading cameras:', error);
+                document.getElementById('cameraContainer').innerHTML = '<div class="no-results">Error loading cameras: ' + error.message + '</div>';
             }
+        }
+
+        // Load health data
+        async function loadHealthData() {
+            try {
+                console.log('Loading health data...');
+                const response = await fetch('/api/dashboard/health');
+                const data = await response.json();
+
+                // Create health lookup by camera name
+                healthData = {};
+                if (data.cameras) {
+                    data.cameras.forEach(cam => {
+                        healthData[cam.camera_name] = cam;
+                    });
+                }
+                console.log('Health data loaded for', Object.keys(healthData).length, 'cameras');
+
+                // Store statistics
+                healthStats = data.statistics || {};
+
+                // Update stats display
+                updateHealthStats();
+
+                // Update health indicators on existing camera cards
+                allCameras.forEach(cam => {
+                    const card = document.getElementById('card-' + cam.id);
+                    if (card) {
+                        const nameDiv = card.querySelector('.camera-name');
+                        if (nameDiv) {
+                            const health = healthData[cam.name];
+                            const indicator = nameDiv.querySelector('.health-indicator');
+                            if (indicator && health) {
+                                indicator.className = 'health-indicator health-' + health.status;
+                                indicator.title = health.status.charAt(0).toUpperCase() + health.status.slice(1) +
+                                    (health.last_check ? ' (checked ' + new Date(health.last_check).toLocaleString() + ')' : '');
+                            }
+                        }
+                    }
+                });
+                console.log('Health indicators updated');
+            } catch (error) {
+                console.error('Error loading health data:', error);
+            }
+        }
+
+        // Update health statistics display
+        function updateHealthStats() {
+            document.getElementById('onlineCameras').textContent = healthStats.online || 0;
+            document.getElementById('degradedCameras').textContent = healthStats.degraded || 0;
+            document.getElementById('offlineCameras').textContent = healthStats.offline || 0;
+            document.getElementById('systemHealth').textContent = (healthStats.system_health_percentage || 0) + '%';
+            document.getElementById('problemCameras').textContent = healthStats.problem_cameras || 0;
+        }
+
+        // Test all cameras
+        async function testAllCameras() {
+            try {
+                showNotification('Starting health check for all cameras...', 'info');
+                const response = await fetch('/api/cameras/test-all', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification(data.message + '\nResults will update shortly...', 'success');
+                    // Reload health data after 5 seconds
+                    setTimeout(loadHealthData, 5000);
+                }
+            } catch (error) {
+                showNotification('Error starting health check', 'error');
+            }
+        }
+
+        // Get health indicator HTML
+        function getHealthIndicator(cameraName) {
+            const health = healthData[cameraName];
+            if (!health) {
+                return '<span class="health-indicator health-unknown" title="Unknown status"></span>';
+            }
+            const statusClass = 'health-' + health.status;
+            const title = health.status.charAt(0).toUpperCase() + health.status.slice(1) +
+                          (health.last_check ? ' (checked ' + new Date(health.last_check).toLocaleString() + ')' : '');
+            return `<span class="health-indicator ${statusClass}" title="${title}"></span>`;
         }
 
         // Display cameras
         function displayCameras(cameras) {
             const container = document.getElementById('cameraContainer');
-            document.getElementById('displayedCameras').textContent = cameras.length;
 
             if (cameras.length === 0) {
                 container.innerHTML = '<div class="no-results">No cameras found</div>';
                 return;
             }
 
-            container.innerHTML = '<div class="camera-grid">' + cameras.map(cam => `
+            container.innerHTML = '<div class="camera-grid">' + cameras.map(cam => {
+                const healthIndicator = getHealthIndicator(cam.name);
+                const snapshotUrl = `/static/snapshots/${cam.ip}.jpg?t=${Date.now()}`;
+                const health = healthData[cam.name];
+                let responseTimeInfo = '';
+                if (health && (health.avg_ping_ms || health.avg_snapshot_ms)) {
+                    const pingTime = health.avg_ping_ms ? `${Math.round(health.avg_ping_ms)}ms` : 'N/A';
+                    const snapTime = health.avg_snapshot_ms ? `${Math.round(health.avg_snapshot_ms)}ms` : 'N/A';
+                    responseTimeInfo = `<div class="camera-info">⏱️ Ping: ${pingTime} | Snapshot: ${snapTime}</div>`;
+                }
+                return `
                 <div class="camera-card ${selectedCameras.has(cam.id) ? 'selected' : ''}" id="card-${cam.id}">
                     <div class="camera-header">
                         <input type="checkbox" class="camera-checkbox"
                                ${selectedCameras.has(cam.id) ? 'checked' : ''}
                                onchange="toggleCamera('${cam.id}')" />
-                        <div class="camera-name">${cam.name}</div>
+                        <div class="camera-name">${cam.name}${healthIndicator}</div>
                     </div>
                     <div class="camera-info">📍 ${cam.location}</div>
                     <div class="camera-info">🌐 ${cam.ip}</div>
+                    ${responseTimeInfo}
+                    <div class="camera-snapshot" onclick="viewSnapshot('${cam.ip}', '${cam.name}')">
+                        <img src="${snapshotUrl}" alt="${cam.name} snapshot"
+                             onerror="this.parentElement.innerHTML='<div class=\\'snapshot-placeholder\\'>No snapshot available</div>'" />
+                    </div>
                     <div class="camera-actions">
                         <button class="action-btn reboot" onclick="showRebootModal('${cam.id}')">🔄 Reboot</button>
                         <button class="action-btn snapshot" onclick="snapshotSingle('${cam.id}')">📸 Snapshot</button>
                     </div>
                 </div>
-            `).join('') + '</div>';
+            `}).join('') + '</div>';
 
             updateSelectionCount();
         }
@@ -320,18 +475,53 @@
         // Filter by highway
         function filterHighway(highway) {
             currentFilter = highway;
+            healthFilter = 'all'; // Reset health filter
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            filterCameras(highway);
+            displayCameras(getFilteredCameras());
+        }
+
+        // Filter by health status
+        function filterHealth(status) {
+            healthFilter = status;
+            currentFilter = 'all'; // Reset highway filter
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayCameras(getFilteredCameras());
+        }
+
+        // Get filtered cameras based on current filters
+        function getFilteredCameras() {
+            let filtered = allCameras;
+
+            // Apply highway filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(cam => cam.location.includes(currentFilter));
+            }
+
+            // Apply health filter
+            if (healthFilter !== 'all') {
+                filtered = filtered.filter(cam => {
+                    const health = healthData[cam.name];
+                    if (!health) return healthFilter === 'unknown';
+
+                    if (healthFilter === 'online') {
+                        return health.status === 'online';
+                    } else if (healthFilter === 'offline') {
+                        return health.status === 'offline' || health.status === 'degraded';
+                    } else if (healthFilter === 'problem') {
+                        return health.consecutive_failures >= 3;
+                    }
+                    return true;
+                });
+            }
+
+            return filtered;
         }
 
         function filterCameras(highway) {
-            if (highway === 'all') {
-                displayCameras(allCameras);
-            } else {
-                const filtered = allCameras.filter(cam => cam.location.includes(highway));
-                displayCameras(filtered);
-            }
+            // Deprecated - kept for compatibility
+            filterHighway(highway);
         }
 
         // Show reboot modal
@@ -583,8 +773,38 @@
             }, 5000);
         }
 
+        // View snapshot in modal
+        function viewSnapshot(ip, cameraName) {
+            const modal = document.getElementById('snapshotModal');
+            const modalImg = document.getElementById('snapshotModalImg');
+            const caption = document.getElementById('snapshotCaption');
+
+            modal.style.display = 'block';
+            modalImg.src = `/static/snapshots/${ip}.jpg?t=${Date.now()}`;
+            caption.textContent = `${cameraName} (${ip})`;
+        }
+
+        function closeSnapshotModal() {
+            document.getElementById('snapshotModal').style.display = 'none';
+        }
+
+        // Close modal on click outside image
+        window.onclick = function(event) {
+            const modal = document.getElementById('snapshotModal');
+            if (event.target == modal) {
+                closeSnapshotModal();
+            }
+        }
+
         // Load cameras on startup
         loadCameras();
     </script>
+
+    <!-- Snapshot Viewer Modal -->
+    <div id="snapshotModal" class="snapshot-modal" onclick="closeSnapshotModal()">
+        <span class="snapshot-modal-close">&times;</span>
+        <img class="snapshot-modal-content" id="snapshotModalImg" onclick="event.stopPropagation()">
+        <div id="snapshotCaption" style="text-align: center; color: white; padding: 10px; font-size: 18px;"></div>
+    </div>
 </body>
 </html>
