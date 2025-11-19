@@ -99,7 +99,20 @@
         .progress-float-close { cursor: pointer; font-size: 20px; color: #999; line-height: 1; padding: 0 5px; }
         .progress-float-close:hover { color: #333; }
         @keyframes slideUp { from { transform: translateY(400px); } to { transform: translateY(0); } }
+
+        /* Trends Charts */
+        .trends-section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .trends-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .trends-title { font-size: 18px; font-weight: 600; color: #003366; }
+        .trends-controls { display: flex; gap: 10px; align-items: center; }
+        .trends-select { padding: 6px 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-container { background: #fafafa; padding: 15px; border-radius: 6px; height: 300px; position: relative; }
+        .chart-container h4 { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .chart-container canvas { max-height: 250px; }
+        @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -132,6 +145,67 @@
             <div class="stat-card">
                 <div class="stat-value" id="problemCameras">-</div>
                 <div class="stat-label">Problem Cameras</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgImageQuality">-</div>
+                <div class="stat-label">Avg Image Quality</div>
+            </div>
+        </div>
+
+        <!-- AI Image Analysis Section -->
+        <div class="ai-analysis-section" id="aiAnalysisSection" style="margin-bottom: 20px;">
+            <div class="trends-header">
+                <div class="trends-title">AI Image Quality Analysis</div>
+                <div class="trends-controls">
+                    <button class="btn btn-secondary" onclick="loadAiAnalysis()" style="padding: 6px 12px; font-size: 13px;">Refresh</button>
+                    <button class="btn btn-primary" onclick="runBatchAnalysis()" style="padding: 6px 12px; font-size: 13px;">Analyze Sample</button>
+                </div>
+            </div>
+            <div class="ai-quality-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
+                <div class="quality-stat" style="background: #1a3d2e; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #4ade80;" id="aiExcellent">-</div>
+                    <div style="font-size: 12px; color: #9ca3af;">Excellent (80+)</div>
+                </div>
+                <div class="quality-stat" style="background: #3d3a1a; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #fbbf24;" id="aiAcceptable">-</div>
+                    <div style="font-size: 12px; color: #9ca3af;">Acceptable (50-79)</div>
+                </div>
+                <div class="quality-stat" style="background: #3d1a1a; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #f87171;" id="aiPoor">-</div>
+                    <div style="font-size: 12px; color: #9ca3af;">Poor (&lt;50)</div>
+                </div>
+                <div class="quality-stat" style="background: #1e293b; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #60a5fa;" id="aiAnalyzed">-</div>
+                    <div style="font-size: 12px; color: #9ca3af;">Total Analyzed</div>
+                </div>
+            </div>
+            <div id="aiAttentionCameras" style="margin-top: 15px;">
+                <div style="color: #9ca3af; font-size: 13px;">Loading cameras needing attention...</div>
+            </div>
+        </div>
+
+        <!-- Trends Section -->
+        <div class="trends-section" id="trendsSection">
+            <div class="trends-header">
+                <div class="trends-title">System Health Trends</div>
+                <div class="trends-controls">
+                    <select class="trends-select" id="trendsPeriod" onchange="loadTrends()">
+                        <option value="24">Last 24 Hours</option>
+                        <option value="48">Last 48 Hours</option>
+                        <option value="168">Last 7 Days</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="exportCSV()" style="padding: 6px 12px; font-size: 13px;">Export CSV</button>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h4>System Health %</h4>
+                    <canvas id="healthChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h4>Average Response Time (ms)</h4>
+                    <canvas id="responseChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -246,6 +320,100 @@
         let currentRebootCamera = null;
         let currentSnapshotSession = null;
         let snapshotProgressInterval = null;
+        let healthChart = null;
+        let responseChart = null;
+
+        // Load and render trends charts
+        async function loadTrends() {
+            try {
+                const hours = document.getElementById('trendsPeriod').value;
+                const interval = hours <= 24 ? 60 : (hours <= 48 ? 120 : 240);
+
+                const response = await fetch(`/api/health/system-history?hours=${hours}&interval=${interval}`);
+                const data = await response.json();
+
+                if (!data.history || data.history.length === 0) {
+                    console.log('No historical data available yet');
+                    return;
+                }
+
+                const labels = data.history.map(d => {
+                    const date = new Date(d.timestamp);
+                    return hours <= 24
+                        ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                        : date.toLocaleDateString([], {month: 'short', day: 'numeric', hour: '2-digit'});
+                });
+
+                // Health percentage chart
+                const healthCtx = document.getElementById('healthChart').getContext('2d');
+                if (healthChart) healthChart.destroy();
+                healthChart = new Chart(healthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Health %',
+                            data: data.history.map(d => d.health_percentage),
+                            borderColor: '#4caf50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+
+                // Response time chart
+                const responseCtx = document.getElementById('responseChart').getContext('2d');
+                if (responseChart) responseChart.destroy();
+                responseChart = new Chart(responseCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Ping',
+                                data: data.history.map(d => d.avg_ping_ms),
+                                borderColor: '#2196f3',
+                                backgroundColor: 'transparent',
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Snapshot',
+                                data: data.history.map(d => d.avg_snapshot_ms),
+                                borderColor: '#ff9800',
+                                backgroundColor: 'transparent',
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { min: 0, ticks: { callback: v => v + 'ms' } }
+                        },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading trends:', error);
+            }
+        }
+
+        // Export health data as CSV
+        function exportCSV() {
+            const hours = document.getElementById('trendsPeriod').value;
+            window.location.href = `/api/health/export-csv?hours=${hours}`;
+        }
 
         // Load cameras on page load
         async function loadCameras() {
@@ -336,6 +504,88 @@
             document.getElementById('offlineCameras').textContent = healthStats.offline || 0;
             document.getElementById('systemHealth').textContent = (healthStats.system_health_percentage || 0) + '%';
             document.getElementById('problemCameras').textContent = healthStats.problem_cameras || 0;
+        }
+
+        // Load AI analysis data
+        async function loadAiAnalysis() {
+            try {
+                const response = await fetch('/api/analysis/quality');
+                if (!response.ok) {
+                    throw new Error('AI analysis not available');
+                }
+                const data = await response.json();
+
+                // Update summary stats
+                const summary = data.summary || {};
+                document.getElementById('aiExcellent').textContent = summary.excellent_count || 0;
+                document.getElementById('aiAcceptable').textContent = summary.acceptable_count || 0;
+                document.getElementById('aiPoor').textContent = summary.poor_count || 0;
+                document.getElementById('aiAnalyzed').textContent = summary.total_analyzed || 0;
+                document.getElementById('avgImageQuality').textContent = summary.average_score ? summary.average_score + '%' : '-';
+
+                // Load cameras needing attention
+                const attentionResponse = await fetch('/api/analysis/attention');
+                if (attentionResponse.ok) {
+                    const attentionData = await attentionResponse.json();
+                    displayAttentionCameras(attentionData.cameras || []);
+                }
+            } catch (error) {
+                console.log('AI analysis not available:', error.message);
+                document.getElementById('avgImageQuality').textContent = 'N/A';
+                document.getElementById('aiAttentionCameras').innerHTML = '<div style="color: #6b7280; font-size: 13px;">AI analysis not yet run. Click "Analyze Sample" to get started.</div>';
+            }
+        }
+
+        // Display cameras needing attention
+        function displayAttentionCameras(cameras) {
+            const container = document.getElementById('aiAttentionCameras');
+            if (!cameras || cameras.length === 0) {
+                container.innerHTML = '<div style="color: #4ade80; font-size: 13px;">No cameras need attention - all analyzed cameras have good image quality!</div>';
+                return;
+            }
+
+            let html = '<div style="font-size: 13px; color: #f87171; margin-bottom: 10px;">Cameras Needing Attention (' + cameras.length + '):</div>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px;">';
+
+            cameras.slice(0, 6).forEach(cam => {
+                const scoreColor = cam.quality_score < 30 ? '#f87171' : cam.quality_score < 50 ? '#fbbf24' : '#9ca3af';
+                html += '<div style="background: #1e293b; padding: 10px; border-radius: 6px; border-left: 3px solid ' + scoreColor + ';">';
+                html += '<div style="font-weight: 600; font-size: 13px;">' + cam.camera_name + '</div>';
+                html += '<div style="font-size: 12px; color: ' + scoreColor + ';">Score: ' + cam.quality_score + '/100</div>';
+                if (cam.issues && cam.issues.length > 0) {
+                    html += '<div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">' + cam.issues.slice(0, 2).join(', ') + '</div>';
+                }
+                html += '</div>';
+            });
+
+            html += '</div>';
+            if (cameras.length > 6) {
+                html += '<div style="color: #6b7280; font-size: 12px; margin-top: 8px;">...and ' + (cameras.length - 6) + ' more</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Run batch analysis on sample cameras
+        async function runBatchAnalysis() {
+            try {
+                showNotification('Starting AI analysis on sample cameras...', 'info');
+                const response = await fetch('/api/analysis/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cameras: [] }) // Empty = analyze sample
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    showNotification('Error: ' + data.error, 'error');
+                } else {
+                    showNotification('Analyzed ' + data.analyzed + ' cameras. Refreshing results...', 'success');
+                    setTimeout(loadAiAnalysis, 1000);
+                }
+            } catch (error) {
+                showNotification('Error running batch analysis: ' + error.message, 'error');
+            }
         }
 
         // Test all cameras
@@ -796,8 +1046,10 @@
             }
         }
 
-        // Load cameras on startup
+        // Load cameras and trends on startup
         loadCameras();
+        loadTrends();
+        loadAiAnalysis();
     </script>
 
     <!-- Snapshot Viewer Modal -->

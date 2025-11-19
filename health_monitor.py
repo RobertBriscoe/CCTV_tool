@@ -11,9 +11,12 @@ import logging
 import threading
 import pyodbc
 import requests
+import smtplib
 from requests.auth import HTTPDigestAuth
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,16 +24,309 @@ load_dotenv()
 logger = logging.getLogger("health_monitor")
 
 
+class AlertManager:
+    """Manages health alerts and notifications"""
+
+    def __init__(self, email_config: Dict):
+        """
+        Initialize alert manager
+
+        Args:
+            email_config: Email configuration dictionary
+        """
+        self.email_config = email_config
+        self.previous_status = {}  # Track previous status per camera
+        self.last_alert_time = {}  # Track last alert time per camera
+        self.alert_cooldown = int(os.getenv('ALERT_COOLDOWN_MINUTES', '30'))  # 30 min default
+        self.alert_threshold = int(os.getenv('ALERT_THRESHOLD_FAILURES', '3'))  # Alert after 3 failures
+        self.maintenance_emails = os.getenv('MAINTENANCE_EMAILS', '').split(',')
+        self.maintenance_emails = [e.strip() for e in self.maintenance_emails if e.strip()]
+
+        logger.info(f"AlertManager initialized (cooldown: {self.alert_cooldown}min, threshold: {self.alert_threshold})")
+
+    def check_and_send_alerts(self, camera_name: str, camera_ip: str,
+                               current_status: str, consecutive_failures: int):
+        """
+        Check if alert should be sent and send it
+
+        Args:
+            camera_name: Camera name
+            camera_ip: Camera IP address
+            current_status: Current health status (online/degraded/offline)
+            consecutive_failures: Number of consecutive failures
+        """
+        previous = self.previous_status.get(camera_name, 'unknown')
+
+        # Check for status change
+        if previous != current_status:
+            # Camera went offline/degraded
+            if current_status in ['offline', 'degraded'] and consecutive_failures >= self.alert_threshold:
+                if self._can_send_alert(camera_name):
+                    self._send_offline_alert(camera_name, camera_ip, current_status, consecutive_failures)
+                    self.last_alert_time[camera_name] = datetime.now()
+
+            # Camera came back online
+            elif current_status == 'online' and previous in ['offline', 'degraded']:
+                self._send_recovery_alert(camera_name, camera_ip)
+
+        # Update previous status
+        self.previous_status[camera_name] = current_status
+
+    def _can_send_alert(self, camera_name: str) -> bool:
+        """Check if enough time has passed since last alert (cooldown)"""
+        if camera_name not in self.last_alert_time:
+            return True
+
+        elapsed = datetime.now() - self.last_alert_time[camera_name]
+        return elapsed.total_seconds() >= (self.alert_cooldown * 60)
+
+    def _send_offline_alert(self, camera_name: str, camera_ip: str,
+                            status: str, failures: int):
+        """Send alert for offline/degraded camera"""
+        if not self.maintenance_emails:
+            logger.warning("No maintenance emails configured for alerts")
+            return
+
+        subject = f"🔴 CCTV Alert: {camera_name} is {status.upper()}"
+        body = f"""Camera Health Alert
+
+Camera: {camera_name}
+Status: {status.upper()}
+Consecutive Failures: {failures}
+Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+This camera has failed {failures} consecutive health checks.
+
+Please investigate and take appropriate action.
+
+---
+FDOT CCTV Operations Tool
+Automated Health Monitoring System
+"""
+
+        self._send_email(self.maintenance_emails, subject, body)
+        logger.info(f"Sent offline alert for {camera_name}")
+
+    def _send_recovery_alert(self, camera_name: str, camera_ip: str):
+        """Send alert for camera recovery"""
+        if not self.maintenance_emails:
+            return
+
+        subject = f"🟢 CCTV Recovery: {camera_name} is back ONLINE"
+        body = f"""Camera Recovery Notice
+
+Camera: {camera_name}
+Status: ONLINE
+Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+This camera has recovered and is now responding to health checks.
+
+---
+FDOT CCTV Operations Tool
+Automated Health Monitoring System
+"""
+
+        self._send_email(self.maintenance_emails, subject, body)
+        logger.info(f"Sent recovery alert for {camera_name}")
+
+    def send_daily_summary(self, health_stats: Dict, problem_cameras: List[Dict]):
+        """
+        Send daily health summary email
+
+        Args:
+            health_stats: Dictionary with health statistics
+            problem_cameras: List of cameras with issues
+        """
+        if not self.maintenance_emails:
+            logger.warning("No maintenance emails configured for daily summary")
+            return
+
+        subject = f"📊 CCTV Daily Health Summary - {datetime.now().strftime('%Y-%m-%d')}"
+
+        # Build summary body
+        body = f"""CCTV Daily Health Summary
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+=== SYSTEM HEALTH ===
+Total Cameras: {health_stats.get('total', 0)}
+Online: {health_stats.get('online', 0)} ({health_stats.get('online_percentage', 0):.1f}%)
+Degraded: {health_stats.get('degraded', 0)}
+Offline: {health_stats.get('offline', 0)}
+System Health: {health_stats.get('system_health_percentage', 0):.1f}%
+
+"""
+
+        if problem_cameras:
+            body += "=== PROBLEM CAMERAS ===\n"
+            for cam in problem_cameras:
+                body += f"\n{cam.get('camera_name', 'Unknown')}\n"
+                body += f"  Status: {cam.get('status', 'Unknown')}\n"
+                body += f"  Consecutive Failures: {cam.get('consecutive_failures', 0)}\n"
+                body += f"  Uptime: {cam.get('uptime_percentage', 0):.1f}%\n"
+        else:
+            body += "=== NO PROBLEM CAMERAS ===\nAll cameras are operating normally.\n"
+
+        body += """
+---
+FDOT CCTV Operations Tool
+Automated Health Monitoring System
+"""
+
+        self._send_email(self.maintenance_emails, subject, body)
+        logger.info("Sent daily health summary")
+
+    def _send_email(self, to_emails: List[str], subject: str, body: str) -> bool:
+        """Send email using configured SMTP"""
+        if not self.email_config.get('enabled', False):
+            logger.info("Email disabled, skipping notification")
+            return False
+
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = self.email_config.get('from_email', '')
+            msg['To'] = ', '.join(to_emails)
+            msg['Subject'] = subject
+            msg['Date'] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")
+
+            msg.attach(MIMEText(body, 'plain'))
+
+            with smtplib.SMTP(self.email_config['smtp_server'], self.email_config['smtp_port']) as server:
+                server.starttls()
+                server.login(self.email_config['smtp_username'], self.email_config['from_password'])
+                server.send_message(msg)
+
+            logger.info(f"Email sent to {', '.join(to_emails)}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send email: {e}")
+            return False
+
+
+class RemediationManager:
+    """Manages automated camera remediation (auto-reboot with MIMS ticket)"""
+
+    def __init__(self, reboot_callback=None):
+        """
+        Initialize remediation manager
+
+        Args:
+            reboot_callback: Function to call for rebooting camera
+                            Signature: (camera_ip, camera_name, operator, reason) -> Dict
+        """
+        self.reboot_callback = reboot_callback
+        self.cameras_under_remediation = {}  # camera_name -> remediation info
+        self.auto_reboot_threshold = int(os.getenv('AUTO_REBOOT_THRESHOLD', '6'))  # 6 failures = 30 min
+        self.auto_reboot_enabled = os.getenv('AUTO_REBOOT_ENABLED', 'true').lower() == 'true'
+
+        logger.info(f"RemediationManager initialized (enabled: {self.auto_reboot_enabled}, threshold: {self.auto_reboot_threshold})")
+
+    def check_and_remediate(self, camera_name: str, camera_ip: str,
+                            status: str, consecutive_failures: int) -> bool:
+        """
+        Check if camera needs remediation and perform it
+
+        Args:
+            camera_name: Camera name
+            camera_ip: Camera IP address
+            status: Current status (online/degraded/offline)
+            consecutive_failures: Number of consecutive failures
+
+        Returns:
+            True if remediation was performed, False otherwise
+        """
+        if not self.auto_reboot_enabled:
+            return False
+
+        # If camera is online, clear remediation state
+        if status == 'online':
+            if camera_name in self.cameras_under_remediation:
+                logger.info(f"Camera {camera_name} recovered - clearing remediation state")
+                del self.cameras_under_remediation[camera_name]
+            return False
+
+        # Check if already under remediation (already rebooted, waiting for maintenance)
+        if camera_name in self.cameras_under_remediation:
+            return False
+
+        # Check if threshold reached for auto-reboot
+        if consecutive_failures >= self.auto_reboot_threshold:
+            return self._perform_remediation(camera_name, camera_ip, consecutive_failures)
+
+        return False
+
+    def _perform_remediation(self, camera_name: str, camera_ip: str,
+                             consecutive_failures: int) -> bool:
+        """
+        Perform auto-reboot and create MIMS ticket
+
+        Returns:
+            True if remediation was performed
+        """
+        if not self.reboot_callback:
+            logger.warning(f"Cannot remediate {camera_name} - no reboot callback configured")
+            return False
+
+        logger.info(f"Auto-remediating {camera_name} after {consecutive_failures} failures")
+
+        # Mark as under remediation BEFORE attempting reboot
+        self.cameras_under_remediation[camera_name] = {
+            'timestamp': datetime.now().isoformat(),
+            'failures': consecutive_failures,
+            'ip': camera_ip
+        }
+
+        try:
+            # Perform reboot with MIMS ticket creation
+            reason = f"Auto-remediation: Camera failed {consecutive_failures} consecutive health checks"
+            result = self.reboot_callback(
+                camera_ip=camera_ip,
+                camera_name=camera_name,
+                operator="CCTV Auto-Remediation System",
+                reason=reason
+            )
+
+            if result.get('success'):
+                logger.info(f"Auto-reboot successful for {camera_name}")
+                if result.get('ticket_id'):
+                    logger.info(f"MIMS ticket created: {result['ticket_id']}")
+                    self.cameras_under_remediation[camera_name]['ticket_id'] = result['ticket_id']
+            else:
+                logger.error(f"Auto-reboot failed for {camera_name}: {result.get('message')}")
+                # Still keep under remediation to prevent loops
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Error during auto-remediation of {camera_name}: {e}")
+            return False
+
+    def get_cameras_under_remediation(self) -> Dict:
+        """Get all cameras currently under remediation"""
+        return self.cameras_under_remediation.copy()
+
+    def clear_remediation(self, camera_name: str) -> bool:
+        """Manually clear remediation state for a camera"""
+        if camera_name in self.cameras_under_remediation:
+            del self.cameras_under_remediation[camera_name]
+            logger.info(f"Cleared remediation state for {camera_name}")
+            return True
+        return False
+
+
 class HealthCheckManager:
     """Manages camera health checks and status tracking"""
 
-    def __init__(self, camera_config: Dict, db_config: Dict):
+    def __init__(self, camera_config: Dict, db_config: Dict, email_config: Optional[Dict] = None,
+                 reboot_callback=None):
         """
         Initialize health check manager
 
         Args:
             camera_config: Dictionary of camera configurations
             db_config: Database configuration
+            email_config: Email configuration for alerts (optional)
+            reboot_callback: Function to call for rebooting camera (optional)
         """
         self.camera_config = camera_config
         self.db_config = db_config
@@ -39,6 +335,17 @@ class HealthCheckManager:
         self.running = False
         self.check_thread = None
         self.check_interval = int(os.getenv('HEALTH_CHECK_INTERVAL', '300'))  # 5 minutes default
+
+        # Initialize alert manager if email config provided
+        self.alert_manager = None
+        if email_config:
+            self.alert_manager = AlertManager(email_config)
+            logger.info("Alert manager enabled")
+
+        # Initialize remediation manager
+        self.remediation_manager = RemediationManager(reboot_callback)
+        if reboot_callback:
+            logger.info("Auto-remediation enabled")
 
         logger.info(f"HealthCheckManager initialized with {len(camera_config)} cameras")
         logger.info(f"Health check interval: {self.check_interval} seconds")
@@ -238,8 +545,15 @@ class HealthCheckManager:
             ("Cohu", "/jpegpull/snapshot", "basic", username, password),
             # Axis cameras - Digest auth with root/root
             ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "root"),
+            # Axis cameras - Digest auth with root/T@mpa234 (FDOT custom)
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "T@mpa234"),
+            # Axis cameras - Digest auth with root/Service!1 (alternate)
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "Service!1"),
+            # Axis cameras - Digest auth with FDOT credentials
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "FDOT", "FloridaD0t3!."),
             # Axis alternative paths
             ("Axis", "/jpg/image.jpg", "digest", "root", "root"),
+            ("Axis", "/jpg/image.jpg", "digest", "root", "T@mpa234"),
             # Generic fallbacks
             ("Generic", "/snapshot.jpg", "basic", username, password),
             ("Generic", "/cgi-bin/snapshot.cgi", "basic", username, password),
@@ -589,6 +903,181 @@ class HealthCheckManager:
             'problem_cameras': problem_cameras
         }
 
+    def get_camera_history(self, camera_name: str, hours: int = 24) -> List[Dict]:
+        """
+        Get historical health data for a specific camera
+
+        Args:
+            camera_name: Camera name to get history for
+            hours: Number of hours of history to retrieve (default 24)
+
+        Returns:
+            List of historical health check records
+        """
+        try:
+            conn = pyodbc.connect(self.db_connection_string)
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT
+                    check_timestamp,
+                    status,
+                    ping_response_ms,
+                    snapshot_response_ms,
+                    ping_success,
+                    snapshot_success,
+                    error_message
+                FROM camera_health_log
+                WHERE camera_name = ?
+                AND check_timestamp >= DATEADD(hour, ?, GETDATE())
+                ORDER BY check_timestamp ASC
+            """, (camera_name, -hours))
+
+            history = []
+            for row in cursor.fetchall():
+                history.append({
+                    'timestamp': row.check_timestamp.isoformat() if row.check_timestamp else None,
+                    'status': row.status,
+                    'ping_ms': row.ping_response_ms,
+                    'snapshot_ms': row.snapshot_response_ms,
+                    'ping_success': bool(row.ping_success),
+                    'snapshot_success': bool(row.snapshot_success),
+                    'error': row.error_message
+                })
+
+            conn.close()
+            return history
+
+        except Exception as e:
+            logger.error(f"Error getting camera history: {e}")
+            return []
+
+    def get_system_history(self, hours: int = 24, interval_minutes: int = 60) -> List[Dict]:
+        """
+        Get aggregated system health history over time
+
+        Args:
+            hours: Number of hours of history (default 24)
+            interval_minutes: Aggregation interval in minutes (default 60)
+
+        Returns:
+            List of aggregated health statistics over time
+        """
+        try:
+            conn = pyodbc.connect(self.db_connection_string)
+            cursor = conn.cursor()
+
+            # Aggregate by time intervals
+            cursor.execute("""
+                SELECT
+                    DATEADD(minute,
+                        (DATEDIFF(minute, '2000-01-01', check_timestamp) / ?) * ?,
+                        '2000-01-01'
+                    ) as time_bucket,
+                    COUNT(*) as total_checks,
+                    SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online_count,
+                    SUM(CASE WHEN status = 'offline' THEN 1 ELSE 0 END) as offline_count,
+                    SUM(CASE WHEN status = 'degraded' THEN 1 ELSE 0 END) as degraded_count,
+                    AVG(CAST(ping_response_ms as FLOAT)) as avg_ping_ms,
+                    AVG(CAST(snapshot_response_ms as FLOAT)) as avg_snapshot_ms
+                FROM camera_health_log
+                WHERE check_timestamp >= DATEADD(hour, ?, GETDATE())
+                GROUP BY DATEADD(minute,
+                    (DATEDIFF(minute, '2000-01-01', check_timestamp) / ?) * ?,
+                    '2000-01-01'
+                )
+                ORDER BY time_bucket ASC
+            """, (interval_minutes, interval_minutes, -hours, interval_minutes, interval_minutes))
+
+            history = []
+            for row in cursor.fetchall():
+                total = row.online_count + row.offline_count + row.degraded_count
+                health_pct = (row.online_count / total * 100) if total > 0 else 0
+
+                history.append({
+                    'timestamp': row.time_bucket.isoformat() if row.time_bucket else None,
+                    'total_checks': row.total_checks,
+                    'online': row.online_count,
+                    'offline': row.offline_count,
+                    'degraded': row.degraded_count,
+                    'health_percentage': round(health_pct, 1),
+                    'avg_ping_ms': round(row.avg_ping_ms, 1) if row.avg_ping_ms else None,
+                    'avg_snapshot_ms': round(row.avg_snapshot_ms, 1) if row.avg_snapshot_ms else None
+                })
+
+            conn.close()
+            return history
+
+        except Exception as e:
+            logger.error(f"Error getting system history: {e}")
+            return []
+
+    def export_health_csv(self, hours: int = 24) -> str:
+        """
+        Export health data as CSV format
+
+        Args:
+            hours: Number of hours of data to export (default 24)
+
+        Returns:
+            CSV formatted string
+        """
+        import csv
+        from io import StringIO
+
+        try:
+            conn = pyodbc.connect(self.db_connection_string)
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT
+                    camera_name,
+                    camera_ip,
+                    check_timestamp,
+                    status,
+                    ping_response_ms,
+                    snapshot_response_ms,
+                    ping_success,
+                    snapshot_success,
+                    error_message,
+                    check_type
+                FROM camera_health_log
+                WHERE check_timestamp >= DATEADD(hour, ?, GETDATE())
+                ORDER BY check_timestamp DESC
+            """, (-hours,))
+
+            output = StringIO()
+            writer = csv.writer(output)
+
+            # Write header
+            writer.writerow([
+                'Camera Name', 'IP Address', 'Timestamp', 'Status',
+                'Ping (ms)', 'Snapshot (ms)', 'Ping OK', 'Snapshot OK',
+                'Error', 'Check Type'
+            ])
+
+            # Write data
+            for row in cursor.fetchall():
+                writer.writerow([
+                    row.camera_name,
+                    row.camera_ip,
+                    row.check_timestamp.strftime('%Y-%m-%d %H:%M:%S') if row.check_timestamp else '',
+                    row.status,
+                    row.ping_response_ms or '',
+                    row.snapshot_response_ms or '',
+                    'Yes' if row.ping_success else 'No',
+                    'Yes' if row.snapshot_success else 'No',
+                    row.error_message or '',
+                    row.check_type
+                ])
+
+            conn.close()
+            return output.getvalue()
+
+        except Exception as e:
+            logger.error(f"Error exporting CSV: {e}")
+            return f"Error: {str(e)}"
+
     def check_all_cameras(self, check_type: str = 'auto'):
         """
         Run health checks on all cameras
@@ -650,6 +1139,26 @@ class HealthCheckManager:
                                 'uptime_percentage': cam.get('uptime_percentage', 0.0)
                             })
                 logger.info(f"Cache refreshed with averaged response times for {len(db_status)} cameras")
+
+                # Check and send alerts for status changes
+                if self.alert_manager:
+                    for cam in db_status:
+                        self.alert_manager.check_and_send_alerts(
+                            cam.get('camera_name', ''),
+                            cam.get('camera_ip', ''),
+                            cam.get('status', 'unknown'),
+                            cam.get('consecutive_failures', 0)
+                        )
+
+                # Check for auto-remediation
+                if self.remediation_manager:
+                    for cam in db_status:
+                        self.remediation_manager.check_and_remediate(
+                            cam.get('camera_name', ''),
+                            cam.get('camera_ip', ''),
+                            cam.get('status', 'unknown'),
+                            cam.get('consecutive_failures', 0)
+                        )
         except Exception as e:
             logger.error(f"Failed to refresh cache from database: {e}")
 

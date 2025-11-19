@@ -81,6 +81,14 @@ except ImportError:
     HEALTH_MONITOR_AVAILABLE = False
     print("WARNING: Health monitor not available.")
 
+# Try to import Image Analyzer
+try:
+    from image_analyzer import ImageAnalyzer
+    IMAGE_ANALYZER_AVAILABLE = True
+except ImportError:
+    IMAGE_ANALYZER_AVAILABLE = False
+    print("WARNING: Image analyzer not available.")
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
@@ -803,13 +811,27 @@ def initialize_managers():
     snapshot_manager = SnapshotCaptureManager(STORAGE_CONFIG['base_path'])
     email_manager = EmailNotificationManager(EMAIL_CONFIG)
 
-    # Initialize Health Monitor
+    # Initialize Health Monitor with auto-remediation
     if HEALTH_MONITOR_AVAILABLE:
         try:
-            health_manager = HealthCheckManager(CAMERAS, DB_CONFIG)
-            logger.info("✓ Health monitor initialized")
+            # Pass reboot callback for auto-remediation
+            reboot_callback = reboot_manager.reboot_camera if reboot_manager else None
+            health_manager = HealthCheckManager(
+                CAMERAS, DB_CONFIG, EMAIL_CONFIG, reboot_callback
+            )
+            logger.info("✓ Health monitor initialized with alerts and auto-remediation enabled")
         except Exception as e:
             logger.error(f"Failed to initialize health monitor: {e}")
+
+    # Initialize Image Analyzer for AI-powered snapshot analysis
+    global image_analyzer
+    image_analyzer = None
+    if IMAGE_ANALYZER_AVAILABLE:
+        try:
+            image_analyzer = ImageAnalyzer(DB_CONFIG)
+            logger.info("✓ Image analyzer initialized with Gemini AI")
+        except Exception as e:
+            logger.error(f"Failed to initialize image analyzer: {e}")
 
     logger.info("✓ All managers initialized")
 
@@ -1527,6 +1549,378 @@ def get_problem_cameras():
         })
     except Exception as e:
         logger.error(f"Error getting problem cameras: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/daily-summary', methods=['POST'])
+def send_daily_summary():
+    """Send daily health summary email"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    if not health_manager.alert_manager:
+        return jsonify({'error': 'Alert manager not available'}), 503
+
+    try:
+        # Get health statistics
+        stats = health_manager.get_health_statistics()
+
+        # Get problem cameras
+        statuses = health_manager.get_all_camera_status()
+        problem_cameras = [s for s in statuses if s['consecutive_failures'] >= 3 or s['status'] in ['offline', 'degraded']]
+
+        # Send daily summary
+        health_manager.alert_manager.send_daily_summary(stats, problem_cameras)
+
+        return jsonify({
+            'success': True,
+            'message': 'Daily summary email sent',
+            'statistics': stats,
+            'problem_cameras_count': len(problem_cameras)
+        })
+    except Exception as e:
+        logger.error(f"Error sending daily summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/history/<camera_name>', methods=['GET'])
+def get_camera_history(camera_name):
+    """Get historical health data for a specific camera"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        # Get hours parameter (default 24)
+        hours = request.args.get('hours', 24, type=int)
+        hours = min(hours, 168)  # Max 7 days
+
+        history = health_manager.get_camera_history(camera_name, hours)
+
+        return jsonify({
+            'camera_name': camera_name,
+            'hours': hours,
+            'data_points': len(history),
+            'history': history
+        })
+    except Exception as e:
+        logger.error(f"Error getting camera history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/system-history', methods=['GET'])
+def get_system_history():
+    """Get aggregated system health history"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        # Get parameters
+        hours = request.args.get('hours', 24, type=int)
+        hours = min(hours, 168)  # Max 7 days
+        interval = request.args.get('interval', 60, type=int)
+        interval = max(15, min(interval, 240))  # 15 min to 4 hours
+
+        history = health_manager.get_system_history(hours, interval)
+
+        return jsonify({
+            'hours': hours,
+            'interval_minutes': interval,
+            'data_points': len(history),
+            'history': history
+        })
+    except Exception as e:
+        logger.error(f"Error getting system history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/export-csv', methods=['GET'])
+def export_health_csv():
+    """Export health data as CSV file"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        # Get hours parameter (default 24)
+        hours = request.args.get('hours', 24, type=int)
+        hours = min(hours, 168)  # Max 7 days
+
+        csv_data = health_manager.export_health_csv(hours)
+
+        # Return as downloadable CSV file
+        from flask import Response
+        filename = f"health_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+        return Response(
+            csv_data,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting CSV: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/remediation', methods=['GET'])
+def get_remediation_status():
+    """Get cameras currently under auto-remediation"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        cameras = health_manager.remediation_manager.get_cameras_under_remediation()
+        return jsonify({
+            'cameras_under_remediation': cameras,
+            'count': len(cameras),
+            'auto_reboot_enabled': health_manager.remediation_manager.auto_reboot_enabled,
+            'auto_reboot_threshold': health_manager.remediation_manager.auto_reboot_threshold
+        })
+    except Exception as e:
+        logger.error(f"Error getting remediation status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health/remediation/<camera_name>', methods=['DELETE'])
+def clear_remediation(camera_name):
+    """Clear remediation state for a camera (allow auto-reboot again)"""
+    if not health_manager:
+        return jsonify({'error': 'Health monitor not available'}), 503
+
+    try:
+        cleared = health_manager.remediation_manager.clear_remediation(camera_name)
+        if cleared:
+            return jsonify({
+                'success': True,
+                'message': f'Remediation state cleared for {camera_name}'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'{camera_name} was not under remediation'
+            }), 404
+    except Exception as e:
+        logger.error(f"Error clearing remediation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# IMAGE ANALYSIS API ENDPOINTS
+# =============================================================================
+
+@app.route('/api/analysis/camera/<camera_name>', methods=['POST'])
+def analyze_camera_image(camera_name):
+    """Analyze a camera's current snapshot using AI"""
+    if not image_analyzer:
+        return jsonify({'error': 'Image analyzer not available'}), 503
+
+    # Find camera in CAMERAS dict
+    camera_data = None
+    for cam_id, cam_info in CAMERAS.items():
+        if cam_info.get('name') == camera_name or cam_id == camera_name:
+            camera_data = cam_info
+            break
+
+    if not camera_data:
+        return jsonify({'error': f'Camera {camera_name} not found'}), 404
+
+    try:
+        camera_ip = camera_data.get('ip')
+        username = camera_data.get('username', CAMERA_DEFAULTS['onvif_user'])
+        password = camera_data.get('password', CAMERA_DEFAULTS['onvif_pass'])
+
+        # Try multiple HTTP snapshot endpoints (same as health monitor)
+        camera_configs = [
+            # Cohu cameras - Basic auth
+            ("Cohu", "/jpegpull/snapshot", "basic", username, password),
+            # Axis cameras - Digest auth with various credentials
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "root"),
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "T@mpa234"),
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "Service!1"),
+            ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "FDOT", "FloridaD0t3!."),
+            # Generic fallbacks
+            ("Generic", "/snapshot.jpg", "basic", username, password),
+        ]
+
+        image_data = None
+        for vendor, path, auth_type, user, passwd in camera_configs:
+            try:
+                url = f"http://{camera_ip}{path}"
+                if auth_type == "basic":
+                    auth = (user, passwd)
+                    response = requests.get(url, auth=auth, timeout=10)
+                else:  # digest
+                    from requests.auth import HTTPDigestAuth
+                    response = requests.get(url, auth=HTTPDigestAuth(user, passwd), timeout=10)
+
+                if response.status_code == 200 and len(response.content) > 1000:
+                    image_data = response.content
+                    logger.debug(f"Captured snapshot from {camera_name} using {vendor} endpoint")
+                    break
+            except Exception as e:
+                logger.debug(f"{vendor} snapshot failed for {camera_ip}: {e}")
+                continue
+
+        if not image_data:
+            return jsonify({
+                'error': f"Failed to capture snapshot from {camera_name} - all methods failed"
+            }), 500
+
+        # Analyze with AI
+        analysis = image_analyzer.analyze_image(image_data, camera_name)
+
+        return jsonify(analysis)
+
+    except Exception as e:
+        logger.error(f"Error analyzing camera {camera_name}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analysis/quality', methods=['GET'])
+def get_quality_status():
+    """Get image quality status for all cameras"""
+    if not image_analyzer:
+        return jsonify({'error': 'Image analyzer not available'}), 503
+
+    try:
+        cameras = image_analyzer.get_camera_quality_status()
+        summary = image_analyzer.get_quality_summary()
+
+        return jsonify({
+            'cameras': cameras,
+            'summary': summary
+        })
+    except Exception as e:
+        logger.error(f"Error getting quality status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analysis/quality/<camera_name>', methods=['GET'])
+def get_camera_quality(camera_name):
+    """Get image quality status for a specific camera"""
+    if not image_analyzer:
+        return jsonify({'error': 'Image analyzer not available'}), 503
+
+    try:
+        status = image_analyzer.get_camera_quality_status(camera_name)
+        history = image_analyzer.get_analysis_history(camera_name)
+
+        if not status:
+            return jsonify({
+                'camera_name': camera_name,
+                'message': 'No analysis data available for this camera'
+            }), 404
+
+        return jsonify({
+            'current': status[0] if status else None,
+            'history': history
+        })
+    except Exception as e:
+        logger.error(f"Error getting quality for {camera_name}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analysis/attention', methods=['GET'])
+def get_cameras_needing_attention():
+    """Get cameras with low quality scores needing maintenance"""
+    if not image_analyzer:
+        return jsonify({'error': 'Image analyzer not available'}), 503
+
+    try:
+        threshold = request.args.get('threshold', 50, type=int)
+        cameras = image_analyzer.get_cameras_needing_attention(threshold)
+
+        return jsonify({
+            'cameras': cameras,
+            'count': len(cameras),
+            'threshold': threshold
+        })
+    except Exception as e:
+        logger.error(f"Error getting cameras needing attention: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analysis/batch', methods=['POST'])
+def batch_analyze_cameras():
+    """Analyze multiple cameras (or all) - runs in background"""
+    if not image_analyzer:
+        return jsonify({'error': 'Image analyzer not available'}), 503
+
+    try:
+        data = request.get_json() or {}
+        camera_names = data.get('cameras', [])
+
+        # If no cameras specified, analyze all
+        if not camera_names:
+            camera_names = [cam_info.get('name', cam_id) for cam_id, cam_info in CAMERAS.items()]
+
+        # Limit to prevent overload
+        max_cameras = 50
+        if len(camera_names) > max_cameras:
+            return jsonify({
+                'error': f'Too many cameras. Maximum is {max_cameras} at a time.'
+            }), 400
+
+        # Start analysis in background (for now, do synchronously but limit)
+        results = []
+        for camera_name in camera_names[:10]:  # Process first 10 immediately
+            # Find camera in CAMERAS dict
+            camera_data = None
+            for cam_id, cam_info in CAMERAS.items():
+                if cam_info.get('name') == camera_name or cam_id == camera_name:
+                    camera_data = cam_info
+                    break
+
+            if not camera_data:
+                results.append({
+                    'camera_name': camera_name,
+                    'success': False,
+                    'error': 'Camera not found'
+                })
+                continue
+
+            try:
+                camera_ip = camera_data.get('ip')
+                username = camera_data.get('username', CAMERA_DEFAULTS['onvif_user'])
+                password = camera_data.get('password', CAMERA_DEFAULTS['onvif_pass'])
+
+                # Try multiple HTTP snapshot endpoints
+                camera_configs = [
+                    ("Cohu", "/jpegpull/snapshot", "basic", username, password),
+                    ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "root"),
+                    ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "T@mpa234"),
+                    ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "root", "Service!1"),
+                    ("Axis", "/axis-cgi/jpg/image.cgi", "digest", "FDOT", "FloridaD0t3!."),
+                    ("Generic", "/snapshot.jpg", "basic", username, password),
+                ]
+
+                image_data = None
+                for vendor, path, auth_type, user, passwd in camera_configs:
+                    try:
+                        url = f"http://{camera_ip}{path}"
+                        if auth_type == "basic":
+                            response = requests.get(url, auth=(user, passwd), timeout=10)
+                        else:
+                            from requests.auth import HTTPDigestAuth
+                            response = requests.get(url, auth=HTTPDigestAuth(user, passwd), timeout=10)
+
+                        if response.status_code == 200 and len(response.content) > 1000:
+                            image_data = response.content
+                            break
+                    except:
+                        continue
+
+                if image_data:
+                    analysis = image_analyzer.analyze_image(image_data, camera_name)
+                    results.append(analysis)
+                else:
+                    results.append({
+                        'camera_name': camera_name,
+                        'success': False,
+                        'error': 'Snapshot capture failed'
+                    })
+            except Exception as e:
+                results.append({
+                    'camera_name': camera_name,
+                    'success': False,
+                    'error': str(e)
+                })
+
+        return jsonify({
+            'results': results,
+            'analyzed': len([r for r in results if r.get('success')]),
+            'total_requested': len(camera_names)
+        })
+
+    except Exception as e:
+        logger.error(f"Error in batch analysis: {e}")
         return jsonify({'error': str(e)}), 500
 
 # =============================================================================
