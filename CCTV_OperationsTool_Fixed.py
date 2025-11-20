@@ -89,6 +89,14 @@ except ImportError:
     IMAGE_ANALYZER_AVAILABLE = False
     print("WARNING: Image analyzer not available.")
 
+# Try to import Report Generator
+try:
+    from report_generator import ReportGenerator
+    REPORT_GENERATOR_AVAILABLE = True
+except ImportError:
+    REPORT_GENERATOR_AVAILABLE = False
+    print("WARNING: Report generator not available.")
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
@@ -786,7 +794,7 @@ health_manager = None
 
 def initialize_managers():
     """Initialize global managers"""
-    global reboot_manager, snapshot_manager, email_manager, mims_client, health_manager
+    global reboot_manager, snapshot_manager, email_manager, mims_client, health_manager, report_generator
 
     # Initialize MIMS client if available
     if MIMS_AVAILABLE:
@@ -832,6 +840,16 @@ def initialize_managers():
             logger.info("✓ Image analyzer initialized with Gemini AI")
         except Exception as e:
             logger.error(f"Failed to initialize image analyzer: {e}")
+
+    # Initialize Report Generator for scheduled reporting
+    global report_generator
+    report_generator = None
+    if REPORT_GENERATOR_AVAILABLE:
+        try:
+            report_generator = ReportGenerator(DB_CONFIG, EMAIL_CONFIG)
+            logger.info("✓ Report generator initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize report generator: {e}")
 
     logger.info("✓ All managers initialized")
 
@@ -1932,6 +1950,135 @@ def batch_analyze_cameras():
 
     except Exception as e:
         logger.error(f"Error in batch analysis: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# =============================================================================
+# REPORTING & TREND ANALYSIS ENDPOINTS
+# =============================================================================
+
+@app.route('/api/reports/summary', methods=['GET'])
+def get_system_summary():
+    """Get system health summary for specified number of days"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        days = request.args.get('days', 7, type=int)
+        summary = report_generator.get_system_health_summary(days)
+        return jsonify(summary)
+    except Exception as e:
+        logger.error(f"Error generating summary: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/trends', methods=['GET'])
+def get_performance_trends():
+    """Get daily performance trends"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        days = request.args.get('days', 7, type=int)
+        trends = report_generator.get_performance_trends(days)
+        return jsonify({'trends': trends, 'period_days': days})
+    except Exception as e:
+        logger.error(f"Error getting trends: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/failing-cameras', methods=['GET'])
+def get_failing_cameras():
+    """Get cameras with most failures"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        days = request.args.get('days', 7, type=int)
+        limit = request.args.get('limit', 10, type=int)
+        cameras = report_generator.get_top_failing_cameras(days, limit)
+        return jsonify({'cameras': cameras, 'period_days': days})
+    except Exception as e:
+        logger.error(f"Error getting failing cameras: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/daily', methods=['GET'])
+def generate_daily_report():
+    """Generate daily health report (text format)"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        report = report_generator.generate_daily_report()
+        return jsonify({'report': report})
+    except Exception as e:
+        logger.error(f"Error generating daily report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/weekly', methods=['GET'])
+def generate_weekly_report():
+    """Generate weekly summary report (text format)"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        report = report_generator.generate_weekly_report()
+        return jsonify({'report': report})
+    except Exception as e:
+        logger.error(f"Error generating weekly report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/send-daily', methods=['POST'])
+def send_daily_report():
+    """Send daily report via email"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        data = request.get_json() or {}
+        recipients = data.get('recipients', [])
+
+        if not recipients:
+            # Default to stakeholder emails
+            stakeholder_emails = os.getenv('STAKEHOLDER_EMAILS', '')
+            recipients = [e.strip() for e in stakeholder_emails.split(',') if e.strip()]
+
+        if not recipients:
+            return jsonify({'error': 'No recipients specified'}), 400
+
+        success = report_generator.send_daily_report(recipients)
+
+        if success:
+            return jsonify({'message': f'Daily report sent to {len(recipients)} recipients'})
+        else:
+            return jsonify({'error': 'Failed to send report'}), 500
+    except Exception as e:
+        logger.error(f"Error sending daily report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/send-weekly', methods=['POST'])
+def send_weekly_report():
+    """Send weekly report via email"""
+    if not report_generator:
+        return jsonify({'error': 'Report generator not available'}), 503
+
+    try:
+        data = request.get_json() or {}
+        recipients = data.get('recipients', [])
+
+        if not recipients:
+            # Default to stakeholder emails
+            stakeholder_emails = os.getenv('STAKEHOLDER_EMAILS', '')
+            recipients = [e.strip() for e in stakeholder_emails.split(',') if e.strip()]
+
+        if not recipients:
+            return jsonify({'error': 'No recipients specified'}), 400
+
+        success = report_generator.send_weekly_report(recipients)
+
+        if success:
+            return jsonify({'message': f'Weekly report sent to {len(recipients)} recipients'})
+        else:
+            return jsonify({'error': 'Failed to send report'}), 500
+    except Exception as e:
+        logger.error(f"Error sending weekly report: {e}")
         return jsonify({'error': str(e)}), 500
 
 # =============================================================================
