@@ -36,13 +36,18 @@ class AlertManager:
         """
         self.email_config = email_config
         self.previous_status = {}  # Track previous status per camera
-        self.last_alert_time = {}  # Track last alert time per camera
+        self.last_alert_time = {}  # Track last offline alert time per camera
+        self.alert_count_today = {}  # Track alert count per camera per day
+        self.last_reset_date = datetime.now().date()  # Track when we last reset counts
+
         self.alert_cooldown = int(os.getenv('ALERT_COOLDOWN_MINUTES', '30'))  # 30 min default
         self.alert_threshold = int(os.getenv('ALERT_THRESHOLD_FAILURES', '3'))  # Alert after 3 failures
+        self.max_daily_alerts = int(os.getenv('MAX_DAILY_ALERTS_PER_CAMERA', '3'))  # Max alerts per camera per day
+
         self.maintenance_emails = os.getenv('MAINTENANCE_EMAILS', '').split(',')
         self.maintenance_emails = [e.strip() for e in self.maintenance_emails if e.strip()]
 
-        logger.info(f"AlertManager initialized (cooldown: {self.alert_cooldown}min, threshold: {self.alert_threshold})")
+        logger.info(f"AlertManager initialized (cooldown: {self.alert_cooldown}min, threshold: {self.alert_threshold}, daily limit: {self.max_daily_alerts})")
 
     def check_and_send_alerts(self, camera_name: str, camera_ip: str,
                                current_status: str, consecutive_failures: int):
@@ -73,12 +78,32 @@ class AlertManager:
         self.previous_status[camera_name] = current_status
 
     def _can_send_alert(self, camera_name: str) -> bool:
-        """Check if enough time has passed since last alert (cooldown)"""
-        if camera_name not in self.last_alert_time:
-            return True
+        """
+        Check if alert can be sent (cooldown + daily limit)
 
-        elapsed = datetime.now() - self.last_alert_time[camera_name]
-        return elapsed.total_seconds() >= (self.alert_cooldown * 60)
+        Returns:
+            True if alert can be sent, False otherwise
+        """
+        # Reset daily counters if it's a new day
+        today = datetime.now().date()
+        if today > self.last_reset_date:
+            self.alert_count_today = {}
+            self.last_reset_date = today
+            logger.debug("Reset daily alert counters")
+
+        # Check daily limit
+        count_today = self.alert_count_today.get(camera_name, 0)
+        if count_today >= self.max_daily_alerts:
+            logger.debug(f"Camera {camera_name} has reached daily alert limit ({count_today}/{self.max_daily_alerts})")
+            return False
+
+        # Check cooldown
+        if camera_name in self.last_alert_time:
+            elapsed = datetime.now() - self.last_alert_time[camera_name]
+            if elapsed.total_seconds() < (self.alert_cooldown * 60):
+                return False
+
+        return True
 
     def _send_offline_alert(self, camera_name: str, camera_ip: str,
                             status: str, failures: int):
@@ -87,14 +112,25 @@ class AlertManager:
             logger.warning("No maintenance emails configured for alerts")
             return
 
+        # Increment daily alert counter
+        count_today = self.alert_count_today.get(camera_name, 0)
+        count_today += 1
+        self.alert_count_today[camera_name] = count_today
+
         subject = f"🔴 CCTV Alert: {camera_name} is {status.upper()}"
+
+        # Add alert count to body if approaching limit
+        alert_count_msg = ""
+        if count_today >= self.max_daily_alerts - 1:
+            alert_count_msg = f"\n⚠️  This is alert #{count_today} today for this camera (max {self.max_daily_alerts}/day).\n"
+
         body = f"""Camera Health Alert
 
 Camera: {camera_name}
 Status: {status.upper()}
 Consecutive Failures: {failures}
 Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
+{alert_count_msg}
 This camera has failed {failures} consecutive health checks.
 
 Please investigate and take appropriate action.
@@ -105,7 +141,7 @@ Automated Health Monitoring System
 """
 
         self._send_email(self.maintenance_emails, subject, body)
-        logger.info(f"Sent offline alert for {camera_name}")
+        logger.info(f"Sent offline alert for {camera_name} (alert #{count_today} today)")
 
     def _send_recovery_alert(self, camera_name: str, camera_ip: str):
         """Send alert for camera recovery"""
