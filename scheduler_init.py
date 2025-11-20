@@ -136,14 +136,28 @@ def create_reboot_ticket(
     try:
         # Convert outcome to boolean
         reboot_ok = (outcome.lower() == "success")
-        
+
         logger.info(f"Creating MIMS ticket for {camera_name} ({cam_ip}) - {outcome}")
-        
+
         # Find the asset id (try IP first, then name)
         asset_id = mims_client.lookup_asset_id(ip=cam_ip)
         if not asset_id:
             logger.warning(f"IP lookup failed for {cam_ip}, trying name lookup...")
             asset_id = mims_client.lookup_asset_id(name=camera_name)
+
+        # CHECK FOR EXISTING OPEN TICKETS BEFORE CREATING A NEW ONE
+        logger.info(f"Checking for existing open tickets for {camera_name}...")
+        existing_tickets = mims_client.get_open_tickets_for_camera(camera_name, asset_id)
+
+        if existing_tickets:
+            ticket_ids = [str(t.get('id', 'unknown')) for t in existing_tickets]
+            logger.warning(f"Skipping ticket creation - {len(existing_tickets)} open ticket(s) already exist for {camera_name}: {', '.join(ticket_ids)}")
+            return True, {
+                "skipped": True,
+                "message": f"Open ticket(s) already exist for {camera_name}",
+                "existing_tickets": ticket_ids,
+                "count": len(existing_tickets)
+            }
 
         if not asset_id:
             # Camera not registered in MIMS - create ticket without asset

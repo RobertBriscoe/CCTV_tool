@@ -1889,7 +1889,7 @@ def batch_analyze_cameras():
             camera_names = [cam_info.get('name', cam_id) for cam_id, cam_info in CAMERAS.items()]
 
         # Limit to prevent overload
-        max_cameras = 50
+        max_cameras = 300
         if len(camera_names) > max_cameras:
             return jsonify({
                 'error': f'Too many cameras. Maximum is {max_cameras} at a time.'
@@ -1897,7 +1897,7 @@ def batch_analyze_cameras():
 
         # Start analysis in background (for now, do synchronously but limit)
         results = []
-        for camera_name in camera_names[:10]:  # Process first 10 immediately
+        for camera_name in camera_names:  # Process all requested cameras
             # Find camera in CAMERAS dict
             camera_data = None
             for cam_id, cam_info in CAMERAS.items():

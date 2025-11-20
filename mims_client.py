@@ -287,6 +287,78 @@ class MIMSClient:
         logger.warning(f"Searched 5 pages, no match found")
         return None
 
+    def get_open_tickets_for_camera(self, camera_name: str, asset_id: Optional[int] = None) -> list:
+        """
+        Query for existing open tickets for a camera.
+
+        Args:
+            camera_name: Camera name to search for in ticket comments
+            asset_id: Optional asset ID to filter by
+
+        Returns:
+            List of open tickets matching the camera
+        """
+        logger.info(f"Querying open tickets for camera: {camera_name}")
+
+        try:
+            # Query tickets - try with various filters
+            # First try: Get recent tickets and filter
+            ok, resp = self._request("GET", "/api/troubleTicket?pageNumber=1&pageSize=100")
+
+            if not ok:
+                logger.error(f"Failed to query tickets: {resp}")
+                return []
+
+            # Handle response format
+            tickets = []
+            if isinstance(resp, list):
+                tickets = resp
+            elif isinstance(resp, dict):
+                tickets = resp.get("items", [])
+            else:
+                logger.error(f"Unexpected response type: {type(resp)}")
+                return []
+
+            logger.info(f"Retrieved {len(tickets)} tickets from MIMS")
+
+            # Filter for open tickets related to this camera
+            open_tickets = []
+            for ticket in tickets:
+                # Check if ticket is closed/resolved
+                status = ticket.get("status", "").lower()
+                if status in ["closed", "resolved", "completed"]:
+                    continue
+
+                # Check if this ticket is for our camera
+                # Match by asset ID if available
+                if asset_id:
+                    ticket_assets = ticket.get("assetIds", [])
+                    if asset_id in ticket_assets:
+                        logger.info(f"Found open ticket #{ticket.get('id')} for asset {asset_id}")
+                        open_tickets.append(ticket)
+                        continue
+
+                # Match by camera name in comments
+                issue_comment = ticket.get("issueComment", "").lower()
+                general_comment = ticket.get("generalComment", "").lower()
+
+                if camera_name.lower() in issue_comment or camera_name.lower() in general_comment:
+                    logger.info(f"Found open ticket #{ticket.get('id')} mentioning '{camera_name}'")
+                    open_tickets.append(ticket)
+
+            if open_tickets:
+                logger.info(f"Found {len(open_tickets)} open ticket(s) for {camera_name}")
+            else:
+                logger.info(f"No open tickets found for {camera_name}")
+
+            return open_tickets
+
+        except Exception as e:
+            logger.error(f"Error querying tickets: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return []
+
     def create_ticket(self, payload: Dict[str, Any]) -> Tuple[bool, Any]:
         """Create a new trouble ticket."""
         logger.info(f"Creating MIMS ticket for assets: {payload.get('assetIds')}")

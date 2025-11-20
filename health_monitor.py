@@ -54,6 +54,12 @@ class AlertManager:
         """
         Check if alert should be sent and send it
 
+        ONLY sends alerts on state transitions:
+        - When camera FIRST goes offline/degraded (online -> offline/degraded)
+        - When camera recovers (offline/degraded -> online)
+
+        Does NOT send repeated alerts while camera stays offline.
+
         Args:
             camera_name: Camera name
             camera_ip: Camera IP address
@@ -62,17 +68,25 @@ class AlertManager:
         """
         previous = self.previous_status.get(camera_name, 'unknown')
 
-        # Check for status change
+        # Only alert on STATUS CHANGES, not every failed check
         if previous != current_status:
-            # Camera went offline/degraded
-            if current_status in ['offline', 'degraded'] and consecutive_failures >= self.alert_threshold:
-                if self._can_send_alert(camera_name):
+            # Camera TRANSITIONED to offline/degraded (first failure)
+            if current_status in ['offline', 'degraded'] and previous not in ['offline', 'degraded', 'unknown']:
+                if consecutive_failures >= self.alert_threshold:
+                    logger.info(f"Camera {camera_name} transitioned from {previous} to {current_status} - sending alert")
                     self._send_offline_alert(camera_name, camera_ip, current_status, consecutive_failures)
                     self.last_alert_time[camera_name] = datetime.now()
+                else:
+                    logger.debug(f"Camera {camera_name} status changed but below threshold ({consecutive_failures}/{self.alert_threshold})")
 
-            # Camera came back online
+            # Camera RECOVERED (came back online)
             elif current_status == 'online' and previous in ['offline', 'degraded']:
+                logger.info(f"Camera {camera_name} recovered from {previous} - sending recovery alert")
                 self._send_recovery_alert(camera_name, camera_ip)
+        else:
+            # Status unchanged - no alert needed
+            if current_status in ['offline', 'degraded']:
+                logger.debug(f"Camera {camera_name} still {current_status} (no alert, already notified)")
 
         # Update previous status
         self.previous_status[camera_name] = current_status
