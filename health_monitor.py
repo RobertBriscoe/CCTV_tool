@@ -216,10 +216,12 @@ class RemediationManager:
         """
         self.reboot_callback = reboot_callback
         self.cameras_under_remediation = {}  # camera_name -> remediation info
+        self.last_ticket_time = {}  # camera_name -> last ticket timestamp
         self.auto_reboot_threshold = int(os.getenv('AUTO_REBOOT_THRESHOLD', '6'))  # 6 failures = 30 min
         self.auto_reboot_enabled = os.getenv('AUTO_REBOOT_ENABLED', 'true').lower() == 'true'
+        self.ticket_cooldown_hours = int(os.getenv('TICKET_COOLDOWN_HOURS', '24'))  # 24 hours default
 
-        logger.info(f"RemediationManager initialized (enabled: {self.auto_reboot_enabled}, threshold: {self.auto_reboot_threshold})")
+        logger.info(f"RemediationManager initialized (enabled: {self.auto_reboot_enabled}, threshold: {self.auto_reboot_threshold}, ticket cooldown: {self.ticket_cooldown_hours}h)")
 
     def check_and_remediate(self, camera_name: str, camera_ip: str,
                             status: str, consecutive_failures: int) -> bool:
@@ -238,12 +240,21 @@ class RemediationManager:
         if not self.auto_reboot_enabled:
             return False
 
-        # If camera is online, clear remediation state
+        # If camera is online, clear remediation state (but preserve ticket cooldown)
         if status == 'online':
             if camera_name in self.cameras_under_remediation:
                 logger.info(f"Camera {camera_name} recovered - clearing remediation state")
                 del self.cameras_under_remediation[camera_name]
             return False
+
+        # Check if we're in ticket cooldown period
+        if camera_name in self.last_ticket_time:
+            elapsed = datetime.now() - self.last_ticket_time[camera_name]
+            cooldown_seconds = self.ticket_cooldown_hours * 3600
+            if elapsed.total_seconds() < cooldown_seconds:
+                hours_remaining = (cooldown_seconds - elapsed.total_seconds()) / 3600
+                logger.debug(f"Camera {camera_name} in ticket cooldown ({hours_remaining:.1f}h remaining)")
+                return False
 
         # Check if already under remediation (already rebooted, waiting for maintenance)
         if camera_name in self.cameras_under_remediation:
@@ -268,6 +279,9 @@ class RemediationManager:
             return False
 
         logger.info(f"Auto-remediating {camera_name} after {consecutive_failures} failures")
+
+        # Record ticket creation time BEFORE attempting (prevents duplicate attempts)
+        self.last_ticket_time[camera_name] = datetime.now()
 
         # Mark as under remediation BEFORE attempting reboot
         self.cameras_under_remediation[camera_name] = {
@@ -295,23 +309,44 @@ class RemediationManager:
                 logger.error(f"Auto-reboot failed for {camera_name}: {result.get('message')}")
                 # Still keep under remediation to prevent loops
 
+            # Log the cooldown period
+            logger.info(f"Camera {camera_name} entered ticket cooldown for {self.ticket_cooldown_hours} hours")
+
             return True
 
         except Exception as e:
             logger.error(f"Error during auto-remediation of {camera_name}: {e}")
+            # Even on error, keep the cooldown to prevent spam
             return False
 
     def get_cameras_under_remediation(self) -> Dict:
         """Get all cameras currently under remediation"""
         return self.cameras_under_remediation.copy()
 
-    def clear_remediation(self, camera_name: str) -> bool:
-        """Manually clear remediation state for a camera"""
+    def clear_remediation(self, camera_name: str, clear_ticket_cooldown: bool = False) -> bool:
+        """
+        Manually clear remediation state for a camera
+
+        Args:
+            camera_name: Camera name
+            clear_ticket_cooldown: Also clear the ticket cooldown (allows new ticket creation)
+
+        Returns:
+            True if state was cleared
+        """
+        cleared = False
+
         if camera_name in self.cameras_under_remediation:
             del self.cameras_under_remediation[camera_name]
             logger.info(f"Cleared remediation state for {camera_name}")
-            return True
-        return False
+            cleared = True
+
+        if clear_ticket_cooldown and camera_name in self.last_ticket_time:
+            del self.last_ticket_time[camera_name]
+            logger.info(f"Cleared ticket cooldown for {camera_name}")
+            cleared = True
+
+        return cleared
 
 
 class HealthCheckManager:

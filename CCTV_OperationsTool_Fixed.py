@@ -1680,11 +1680,22 @@ def clear_remediation(camera_name):
         return jsonify({'error': 'Health monitor not available'}), 503
 
     try:
-        cleared = health_manager.remediation_manager.clear_remediation(camera_name)
+        # Get optional parameter to also clear ticket cooldown
+        data = request.get_json() or {}
+        clear_ticket_cooldown = data.get('clear_ticket_cooldown', False)
+
+        cleared = health_manager.remediation_manager.clear_remediation(
+            camera_name,
+            clear_ticket_cooldown=clear_ticket_cooldown
+        )
+
         if cleared:
+            msg = f'Remediation state cleared for {camera_name}'
+            if clear_ticket_cooldown:
+                msg += ' (ticket cooldown also cleared)'
             return jsonify({
                 'success': True,
-                'message': f'Remediation state cleared for {camera_name}'
+                'message': msg
             })
         else:
             return jsonify({
