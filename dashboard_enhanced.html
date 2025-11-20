@@ -199,11 +199,11 @@
             </div>
             <div class="charts-grid">
                 <div class="chart-container">
-                    <h4>System Health %</h4>
+                    <h4>Daily Uptime Trend (%)</h4>
                     <canvas id="healthChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h4>Average Response Time (ms)</h4>
+                    <h4>Average Response Time Trend (ms)</h4>
                     <canvas id="responseChart"></canvas>
                 </div>
             </div>
@@ -327,24 +327,28 @@
         async function loadTrends() {
             try {
                 const hours = document.getElementById('trendsPeriod').value;
-                const interval = hours <= 24 ? 60 : (hours <= 48 ? 120 : 240);
+                const days = Math.ceil(hours / 24);
 
-                const response = await fetch(`/api/health/system-history?hours=${hours}&interval=${interval}`);
+                // Use new reporting API for better daily trends
+                const response = await fetch(`/api/reports/trends?days=${days}`);
                 const data = await response.json();
 
-                if (!data.history || data.history.length === 0) {
-                    console.log('No historical data available yet');
+                if (!data.trends || data.trends.length === 0) {
+                    console.log('No trend data available yet');
                     return;
                 }
 
-                const labels = data.history.map(d => {
-                    const date = new Date(d.timestamp);
-                    return hours <= 24
-                        ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-                        : date.toLocaleDateString([], {month: 'short', day: 'numeric', hour: '2-digit'});
+                // Sort trends by date
+                data.trends.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                const labels = data.trends.map(d => {
+                    const date = new Date(d.date);
+                    return days <= 1
+                        ? date.toLocaleDateString([], {month: 'short', day: 'numeric', hour: '2-digit'})
+                        : date.toLocaleDateString([], {month: 'short', day: 'numeric'});
                 });
 
-                // Health percentage chart
+                // Uptime Trend Chart
                 const healthCtx = document.getElementById('healthChart').getContext('2d');
                 if (healthChart) healthChart.destroy();
                 healthChart = new Chart(healthCtx, {
@@ -352,55 +356,84 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Health %',
-                            data: data.history.map(d => d.health_percentage),
+                            label: 'System Uptime %',
+                            data: data.trends.map(d => d.uptime_percentage),
                             borderColor: '#4caf50',
                             backgroundColor: 'rgba(76, 175, 80, 0.1)',
                             fill: true,
-                            tension: 0.3
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+                            y: {
+                                min: Math.max(0, Math.min(...data.trends.map(d => d.uptime_percentage)) - 5),
+                                max: 100,
+                                ticks: { callback: v => v.toFixed(1) + '%' }
+                            }
                         },
-                        plugins: { legend: { display: false } }
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const trend = data.trends[context.dataIndex];
+                                        return [
+                                            `Uptime: ${context.parsed.y.toFixed(2)}%`,
+                                            `Online: ${trend.online_count.toLocaleString()}`,
+                                            `Degraded: ${trend.degraded_count}`,
+                                            `Offline: ${trend.offline_count}`,
+                                            `Cameras: ${trend.cameras_checked}`
+                                        ];
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
 
-                // Response time chart
+                // Response Time Trend Chart
                 const responseCtx = document.getElementById('responseChart').getContext('2d');
                 if (responseChart) responseChart.destroy();
                 responseChart = new Chart(responseCtx, {
-                    type: 'line',
+                    type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [
-                            {
-                                label: 'Ping',
-                                data: data.history.map(d => d.avg_ping_ms),
-                                borderColor: '#2196f3',
-                                backgroundColor: 'transparent',
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Snapshot',
-                                data: data.history.map(d => d.avg_snapshot_ms),
-                                borderColor: '#ff9800',
-                                backgroundColor: 'transparent',
-                                tension: 0.3
-                            }
-                        ]
+                        datasets: [{
+                            label: 'Avg Response Time',
+                            data: data.trends.map(d => d.avg_response_time),
+                            backgroundColor: 'rgba(33, 150, 243, 0.6)',
+                            borderColor: '#2196f3',
+                            borderWidth: 1
+                        }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: { min: 0, ticks: { callback: v => v + 'ms' } }
+                            y: {
+                                min: 0,
+                                ticks: { callback: v => v.toFixed(1) + 'ms' }
+                            }
                         },
-                        plugins: { legend: { position: 'bottom' } }
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const trend = data.trends[context.dataIndex];
+                                        return [
+                                            `Response: ${context.parsed.y.toFixed(2)}ms`,
+                                            `Total Checks: ${trend.total_checks.toLocaleString()}`
+                                        ];
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
 

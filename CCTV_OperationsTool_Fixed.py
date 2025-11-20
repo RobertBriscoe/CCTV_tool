@@ -97,6 +97,14 @@ except ImportError:
     REPORT_GENERATOR_AVAILABLE = False
     print("WARNING: Report generator not available.")
 
+# Try to import Report Scheduler
+try:
+    from report_scheduler import ReportScheduler
+    REPORT_SCHEDULER_AVAILABLE = True
+except ImportError:
+    REPORT_SCHEDULER_AVAILABLE = False
+    print("WARNING: Report scheduler not available.")
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
@@ -794,7 +802,7 @@ health_manager = None
 
 def initialize_managers():
     """Initialize global managers"""
-    global reboot_manager, snapshot_manager, email_manager, mims_client, health_manager, report_generator
+    global reboot_manager, snapshot_manager, email_manager, mims_client, health_manager, report_generator, report_scheduler
 
     # Initialize MIMS client if available
     if MIMS_AVAILABLE:
@@ -850,6 +858,16 @@ def initialize_managers():
             logger.info("✓ Report generator initialized")
         except Exception as e:
             logger.error(f"Failed to initialize report generator: {e}")
+
+    # Initialize Report Scheduler for automated delivery
+    global report_scheduler
+    report_scheduler = None
+    if REPORT_SCHEDULER_AVAILABLE and report_generator:
+        try:
+            report_scheduler = ReportScheduler(report_generator)
+            logger.info("✓ Report scheduler initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize report scheduler: {e}")
 
     logger.info("✓ All managers initialized")
 
@@ -2081,6 +2099,19 @@ def send_weekly_report():
         logger.error(f"Error sending weekly report: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reports/scheduler/status', methods=['GET'])
+def get_scheduler_status():
+    """Get report scheduler status and configuration"""
+    if not report_scheduler:
+        return jsonify({'error': 'Report scheduler not available'}), 503
+
+    try:
+        status = report_scheduler.get_status()
+        return jsonify(status)
+    except Exception as e:
+        logger.error(f"Error getting scheduler status: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -2101,6 +2132,15 @@ def main():
             logger.info("✓ Health monitoring started")
         except Exception as e:
             logger.error(f"Failed to start health monitoring: {e}")
+
+    # Start report scheduler
+    if report_scheduler:
+        try:
+            report_scheduler.start()
+            status = report_scheduler.get_status()
+            logger.info(f"✓ Report scheduler started (Daily: {status['daily_report_time']}, Weekly: Day {status['weekly_report_day']} at {status['weekly_report_time']})")
+        except Exception as e:
+            logger.error(f"Failed to start report scheduler: {e}")
 
     # Print status
     print("\n" + "="*70)
