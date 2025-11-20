@@ -1703,12 +1703,6 @@
             "ip": "10.172.244.203",
             "reboot_url": "/api/reboot",
             "snapshot_url": "/api/snapshot"
-        },
-        "CCTV_BAY_SR75_at_SR388": {
-            "name": "CCTV-BAY-SR75@SR388",
-            "ip": "192.168.2.30",
-            "reboot_url": "/api/reboot",
-            "snapshot_url": "/api/snapshot"
         }
     }
 }
