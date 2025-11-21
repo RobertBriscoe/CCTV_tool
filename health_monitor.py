@@ -440,12 +440,11 @@ class HealthCheckManager:
         try:
             conn_str = (
                 f"DRIVER={{{self.db_config['driver']}}};"
-                f"SERVER={self.db_config['server']};"
+                f"SERVER={self.db_config['server']},1433;"
                 f"DATABASE={self.db_config['database']};"
                 f"UID={self.db_config['username']};"
                 f"PWD={self.db_config['password']};"
-                f"PORT=1433;"
-                f"TDS_Version=7.4;"
+                f"TrustServerCertificate=yes;"
                 f"Connection Timeout={self.db_config['timeout']};"
             )
             return pyodbc.connect(conn_str)

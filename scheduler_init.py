@@ -20,6 +20,8 @@ import logging
 import os
 import time
 import threading
+import pyodbc
+from datetime import datetime
 
 # Import your MIMS client
 from mims_client import MIMSClient, MIMSTokenManager
@@ -95,6 +97,50 @@ def create_mims_client(username: Optional[str] = None,
         return None
 
 # -----------------------------------------------------------------------------
+# Maintenance Window Check
+# -----------------------------------------------------------------------------
+def is_camera_in_maintenance(camera_name: str, db_manager=None) -> Tuple[bool, Optional[Dict]]:
+    """
+    Check if a camera is currently in a maintenance window that suppresses alerts.
+
+    Returns:
+        (in_maintenance: bool, maintenance_info: dict|None)
+    """
+    if not db_manager:
+        return False, None
+
+    try:
+        cursor = db_manager.conn.cursor()
+
+        # Check using stored procedure if available
+        cursor.execute("""
+            SELECT
+                COUNT(*) as is_in_maintenance,
+                MAX(id) as maintenance_id,
+                MAX(description) as maintenance_description
+            FROM maintenance_schedule
+            WHERE camera_name = ?
+                AND status IN ('scheduled', 'in-progress')
+                AND suppress_alerts = 1
+                AND GETDATE() BETWEEN scheduled_start AND scheduled_end
+        """, camera_name)
+
+        row = cursor.fetchone()
+        cursor.close()
+
+        if row and row[0] > 0:
+            return True, {
+                'maintenance_id': row[1],
+                'description': row[2]
+            }
+
+        return False, None
+
+    except Exception as e:
+        logger.error(f"Error checking maintenance window for {camera_name}: {e}")
+        return False, None
+
+# -----------------------------------------------------------------------------
 # Ticket Creation for Camera Reboots
 # -----------------------------------------------------------------------------
 def create_reboot_ticket(
@@ -106,7 +152,8 @@ def create_reboot_ticket(
     reason: str,
     submitting_group_id: int = DEFAULT_GROUP_ID,
     issue_id: int = DEFAULT_ISSUE_ID,
-    weather_id: int = DEFAULT_WEATHER_ID
+    weather_id: int = DEFAULT_WEATHER_ID,
+    db_manager=None  # For maintenance window checking
 ) -> Tuple[bool, Any]:
     """
     Create a MIMS ticket when an operator reboots a camera.
@@ -127,6 +174,8 @@ def create_reboot_ticket(
         Why reboot was performed
     submitting_group_id, issue_id, weather_id : int
         IDs for ticket fields (defaults set for D3).
+    db_manager : DatabaseManager, optional
+        Database manager for maintenance window checks.
 
     Returns
     -------
@@ -138,6 +187,18 @@ def create_reboot_ticket(
         reboot_ok = (outcome.lower() == "success")
 
         logger.info(f"Creating MIMS ticket for {camera_name} ({cam_ip}) - {outcome}")
+
+        # CHECK FOR MAINTENANCE WINDOW FIRST
+        in_maintenance, maint_info = is_camera_in_maintenance(camera_name, db_manager)
+        if in_maintenance:
+            logger.info(f"⊘ Skipping ticket creation - {camera_name} is in maintenance window (ID: {maint_info.get('maintenance_id')})")
+            return True, {
+                "skipped": True,
+                "reason": "maintenance_window",
+                "message": f"{camera_name} is in scheduled maintenance",
+                "maintenance_id": maint_info.get('maintenance_id'),
+                "maintenance_description": maint_info.get('description')
+            }
 
         # Find the asset id (try IP first, then name)
         asset_id = mims_client.lookup_asset_id(ip=cam_ip)

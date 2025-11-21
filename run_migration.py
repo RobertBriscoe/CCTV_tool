@@ -13,11 +13,13 @@ load_dotenv()
 def get_db_connection():
     """Create database connection"""
     conn_str = (
-        f"DRIVER={{{os.getenv('DB_DRIVER', 'ODBC Driver 17 for SQL Server')}}};"
+        f"DRIVER={{{os.getenv('DB_DRIVER', 'FreeTDS')}}};"
         f"SERVER={os.getenv('DB_SERVER', 'SG-8-Test-SQL')};"
         f"DATABASE={os.getenv('DB_DATABASE', 'FDOT_CCTV_System')};"
         f"UID={os.getenv('DB_USERNAME', 'RTMCSNAP')};"
         f"PWD={os.getenv('DB_PASSWORD', '')};"
+        f"PORT=1433;"
+        f"TDS_Version=7.4;"
         f"Connection Timeout={os.getenv('DB_TIMEOUT', '30')};"
     )
     return pyodbc.connect(conn_str)
@@ -35,6 +37,7 @@ def run_migration(migration_file: Path):
 
         # Connect to database
         conn = get_db_connection()
+        conn.autocommit = True  # Enable autocommit for DDL statements
         cursor = conn.cursor()
 
         # Split by GO statements and execute each batch
@@ -47,11 +50,9 @@ def run_migration(migration_file: Path):
                 # Fetch messages (PRINT statements)
                 while cursor.nextset():
                     pass
-                conn.commit()
                 print(f"✓ Batch {i} completed successfully")
             except Exception as e:
                 print(f"✗ Error in batch {i}: {e}")
-                conn.rollback()
                 raise
 
         cursor.close()

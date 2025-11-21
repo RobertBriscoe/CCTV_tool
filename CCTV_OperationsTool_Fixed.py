@@ -56,6 +56,9 @@ from typing import Optional, Dict, Any, List, Tuple
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from api_extensions import register_advanced_apis
+from db_manager import DatabaseManager
+from alert_engine import create_alert_engine
+from email_notifier import create_email_notifier
 
 # Try to import ONVIF for camera reboots
 try:
@@ -461,6 +464,9 @@ class CameraRebootManager:
     ) -> Tuple[bool, Any]:
         """Create MIMS ticket for reboot action"""
         try:
+            # Get db_manager if available
+            db_mgr = globals().get('db_manager')
+
             return create_reboot_ticket(
                 mims_client=self.mims_client,
                 camera_name=camera_name,
@@ -470,7 +476,8 @@ class CameraRebootManager:
                 reason=reason,
                 submitting_group_id=MIMS_CONFIG['group_id'],
                 issue_id=MIMS_CONFIG['issue_id'],
-                weather_id=MIMS_CONFIG['weather_id']
+                weather_id=MIMS_CONFIG['weather_id'],
+                db_manager=db_mgr
             )
         except Exception as e:
             self.logger.error(f"MIMS ticket creation exception: {e}")
@@ -2148,12 +2155,35 @@ def main():
 
     # Register advanced feature APIs (groups, search, SLA, maintenance)
     try:
-        # Pass health_manager's db if available, otherwise None (APIs will use fallback)
-        db_ref = health_manager.db if health_manager and hasattr(health_manager, 'db') else None
-        register_advanced_apis(app, CAMERAS, db_ref)
+        # Create database manager for API endpoints
+        db_manager = DatabaseManager()
+        register_advanced_apis(app, CAMERAS, db_manager)
         logger.info("✓ Advanced feature APIs registered")
     except Exception as e:
         logger.error(f"Failed to register advanced APIs: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+    # Create Email Notifier for alerts
+    email_notifier = None
+    try:
+        email_notifier = create_email_notifier()
+        if email_notifier and email_notifier.enabled:
+            logger.info("✓ Email Notifier initialized for alerts")
+        else:
+            logger.info("Email notifications disabled (missing SMTP configuration)")
+    except Exception as e:
+        logger.warning(f"Failed to create email notifier: {e}")
+
+    # Start Alert Processing Engine
+    try:
+        alert_engine = create_alert_engine(db_manager, CAMERAS, check_interval=300, email_notifier=email_notifier)
+        if alert_engine:
+            logger.info("✓ Alert Processing Engine started (check interval: 5 minutes)")
+        else:
+            logger.warning("Alert Processing Engine failed to start")
+    except Exception as e:
+        logger.error(f"Failed to start Alert Processing Engine: {e}")
         import traceback
         logger.error(traceback.format_exc())
 
