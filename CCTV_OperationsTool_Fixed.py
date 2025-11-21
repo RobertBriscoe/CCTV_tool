@@ -55,6 +55,7 @@ from email import encoders
 from typing import Optional, Dict, Any, List, Tuple
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
+from api_extensions import register_advanced_apis
 
 # Try to import ONVIF for camera reboots
 try:
@@ -110,16 +111,24 @@ except ImportError:
 # =============================================================================
 
 # Logging setup
-LOG_DIR = Path("logs")
+LOG_DIR = Path(__file__).parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
+
+# Set up logging handlers with error handling
+handlers = [logging.StreamHandler()]
+try:
+    log_file = LOG_DIR / f'cctv_ops_{datetime.now():%Y%m%d}.log'
+    file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
+    handlers.append(file_handler)
+    print(f"✓ Logging to file: {log_file}")
+except Exception as e:
+    print(f"✗ Failed to create file handler: {e}")
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_DIR / f'cctv_ops_{datetime.now():%Y%m%d}.log'),
-        logging.StreamHandler()
-    ]
+    handlers=handlers,
+    force=True
 )
 logger = logging.getLogger("cctv_ops")
 
@@ -393,12 +402,19 @@ class CameraRebootManager:
                 outcome=result['outcome'],
                 reason=reason
             )
-            
+
             if ticket_ok:
-                ticket_id = ticket_result.get('id') or ticket_result.get('troubleTicketId')
-                result['ticket_id'] = str(ticket_id) if ticket_id else 'created'
-                result['message'] += f" | MIMS ticket: {result['ticket_id']}"
-                self.logger.info(f"✓ MIMS ticket created: {result['ticket_id']}")
+                # Check if ticket was skipped due to existing open tickets
+                if isinstance(ticket_result, dict) and ticket_result.get('skipped'):
+                    existing = ticket_result.get('existing_tickets', [])
+                    result['ticket_id'] = 'skipped'
+                    result['message'] += f" | MIMS ticket skipped (existing: {', '.join(existing)})"
+                    self.logger.info(f"⊘ MIMS ticket skipped: {', '.join(existing)} already open")
+                else:
+                    ticket_id = ticket_result.get('id') or ticket_result.get('troubleTicketId')
+                    result['ticket_id'] = str(ticket_id) if ticket_id else 'created'
+                    result['message'] += f" | MIMS ticket: {result['ticket_id']}"
+                    self.logger.info(f"✓ MIMS ticket created: {result['ticket_id']}")
             else:
                 result['message'] += f" | MIMS ticket failed: {ticket_result}"
                 self.logger.error(f"✗ MIMS ticket creation failed: {ticket_result}")
@@ -469,6 +485,11 @@ class CameraRebootManager:
     ):
         """Send email notification about reboot"""
         if not EMAIL_CONFIG['enabled'] or not EMAIL_CONFIG['maintenance_team']:
+            return
+
+        # Don't send email if ticket was skipped (duplicate prevention)
+        if result.get('ticket_id') == 'skipped':
+            self.logger.info("Email notification skipped (duplicate ticket exists)")
             return
 
         try:
@@ -2124,6 +2145,17 @@ def main():
 
     # Initialize managers
     initialize_managers()
+
+    # Register advanced feature APIs (groups, search, SLA, maintenance)
+    try:
+        # Pass health_manager's db if available, otherwise None (APIs will use fallback)
+        db_ref = health_manager.db if health_manager and hasattr(health_manager, 'db') else None
+        register_advanced_apis(app, CAMERAS, db_ref)
+        logger.info("✓ Advanced feature APIs registered")
+    except Exception as e:
+        logger.error(f"Failed to register advanced APIs: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
     # Start health monitoring background checks
     if health_manager:
